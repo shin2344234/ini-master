@@ -1,0 +1,6 @@
+bin/
+obj/
+dist/
+sdk/example/build/
+*.user
+.vs/

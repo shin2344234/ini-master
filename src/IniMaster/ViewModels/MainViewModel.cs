@@ -1,0 +1,376 @@
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.IO;
+using System.Windows;
+using System.Windows.Data;
+using System.Windows.Input;
+using System.Windows.Threading;
+using IniMaster.Core;
+using IniMaster.Services;
+using Microsoft.Win32;
+
+namespace IniMaster.ViewModels;
+
+public sealed class MainViewModel : ObservableObject
+{
+    private readonly AppSettings _settings;
+    private readonly FolderWatcher _watcher;
+    private readonly DispatcherTimer _gameTimer;
+    private string? _gameRoot;
+    private bool _gameRunning;
+    private ModViewModel? _selectedMod;
+    private SettingViewModel? _selectedSetting;
+    private string _filter = "";
+    private string _modFilter = "";
+    private string _status = "";
+    private int _tab;
+
+    public MainViewModel(AppSettings settings)
+    {
+        _settings = settings;
+        ModsView = CollectionViewSource.GetDefaultView(Mods);
+        ModsView.Filter = o => o is ModViewModel m && FilterMod(m);
+        _watcher = new FolderWatcher(OnFilesChanged);
+        _gameTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+        _gameTimer.Tick += (_, _) => GameRunning = GameLocator.IsGameRunning();
+
+        BrowseCommand = new RelayCommand(Browse);
+        RescanCommand = new RelayCommand(Rescan, () => GameRoot != null);
+        SaveCommand = new RelayCommand(() => CurrentFile?.Save(), () => CurrentFile?.HasChanges == true);
+        SaveAllCommand = new RelayCommand(SaveAll, () => Mods.Any(m => m.HasChanges));
+        RevertCommand = new RelayCommand(() => CurrentFile?.RevertAll(), () => CurrentFile?.HasChanges == true);
+        OpenFolderCommand = new RelayCommand(() => OpenShell(CurrentFile != null ? Path.GetDirectoryName(CurrentFile.Path)! : BinFolder!), () => GameRoot != null);
+        OpenIniCommand = new RelayCommand(() => OpenShell(CurrentFile!.Path), () => CurrentFile?.Exists == true);
+        OpenBackupsCommand = new RelayCommand(OpenBackups, () => CurrentFile != null);
+        ExportMetaCommand = new RelayCommand(ExportMeta, () => CurrentFile != null);
+        GuideCommand = new RelayCommand(OpenGuide);
+        ClearFilterCommand = new RelayCommand(() => Filter = "");
+    }
+
+    public ObservableCollection<ModViewModel> Mods { get; } = new();
+    public ICollectionView ModsView { get; }
+
+    public RelayCommand BrowseCommand { get; }
+    public RelayCommand RescanCommand { get; }
+    public RelayCommand SaveCommand { get; }
+    public RelayCommand SaveAllCommand { get; }
+    public RelayCommand RevertCommand { get; }
+    public RelayCommand OpenFolderCommand { get; }
+    public RelayCommand OpenIniCommand { get; }
+    public RelayCommand OpenBackupsCommand { get; }
+    public RelayCommand ExportMetaCommand { get; }
+    public RelayCommand GuideCommand { get; }
+    public RelayCommand ClearFilterCommand { get; }
+
+    public string? GameRoot
+    {
+        get => _gameRoot;
+        private set
+        {
+            if (Set(ref _gameRoot, value)) Raise(nameof(GameRootText), nameof(HasGame), nameof(BinFolder));
+        }
+    }
+
+    public bool HasGame => GameRoot != null;
+    public string? BinFolder => GameRoot == null ? null : GameLocator.BinFolder(GameRoot);
+    public string GameRootText => GameRoot ?? "Crimson Desert was not found. Choose its folder.";
+
+    public bool GameRunning
+    {
+        get => _gameRunning;
+        set
+        {
+            if (!Set(ref _gameRunning, value)) return;
+            Raise(nameof(GameStateText));
+            foreach (var m in Mods) foreach (var f in m.Files) f.RefreshGameState();
+            if (value) Status = "Crimson Desert started. Changes still save straight to the ini files.";
+        }
+    }
+
+    public string GameStateText => GameRunning ? "Game running" : "Game not running";
+
+    public bool ApplyInstantly
+    {
+        get => _settings.ApplyInstantly;
+        set
+        {
+            if (_settings.ApplyInstantly == value) return;
+            _settings.ApplyInstantly = value;
+            Raise();
+            if (value) SaveAll();
+        }
+    }
+
+    public bool ShowAdvanced
+    {
+        get => _settings.ShowAdvanced;
+        set { if (_settings.ShowAdvanced == value) return; _settings.ShowAdvanced = value; Raise(); CurrentFile?.ApplyFilter(); }
+    }
+
+    public bool RawValues
+    {
+        get => _settings.RawValues;
+        set { if (_settings.RawValues == value) return; _settings.RawValues = value; Raise(); }
+    }
+
+    public bool ShowIniOnly
+    {
+        get => _settings.ShowIniOnly;
+        set { if (_settings.ShowIniOnly == value) return; _settings.ShowIniOnly = value; Raise(); ModsView.Refresh(); }
+    }
+
+    public string Filter
+    {
+        get => _filter;
+        set { if (Set(ref _filter, value ?? "")) { CurrentFile?.ApplyFilter(); Raise(nameof(HasFilter)); } }
+    }
+
+    public bool HasFilter => _filter.Length > 0;
+
+    public string ModFilter
+    {
+        get => _modFilter;
+        set { if (Set(ref _modFilter, value ?? "")) ModsView.Refresh(); }
+    }
+
+    public string Status { get => _status; set => Set(ref _status, value); }
+
+    /// 0 settings, 1 file text.
+    public int Tab { get => _tab; set => Set(ref _tab, value); }
+
+    public ModViewModel? SelectedMod
+    {
+        get => _selectedMod;
+        set
+        {
+            _selectedMod?.SelectedFile?.FlushPendingSave();
+            if (!Set(ref _selectedMod, value)) return;
+            value?.EnsureLoaded();
+            SelectedSetting = null;
+            if (value != null) _settings.LastMod = value.Id;
+            CurrentFile?.ApplyFilter();
+            Raise(nameof(CurrentFile), nameof(HasSelection));
+        }
+    }
+
+    public void OnSelectedFileChanged()
+    {
+        SelectedSetting = null;
+        CurrentFile?.ApplyFilter();
+        Raise(nameof(CurrentFile));
+    }
+
+    public bool HasSelection => SelectedMod != null;
+    public IniFileViewModel? CurrentFile => SelectedMod?.SelectedFile;
+
+    public SettingViewModel? SelectedSetting
+    {
+        get => _selectedSetting;
+        set { if (Set(ref _selectedSetting, value)) Raise(nameof(HasSelectedSetting)); }
+    }
+
+    public bool HasSelectedSetting => SelectedSetting != null;
+
+    public string ChangeSummary
+    {
+        get
+        {
+            var n = Mods.SelectMany(m => m.Files).Sum(f => f.ChangeCount);
+            return n == 0 ? "" : n == 1 ? "1 unsaved change" : $"{n} unsaved changes";
+        }
+    }
+
+    // ------------------------------------------------------------ start up
+
+    public void Start(string? commandLinePath)
+    {
+        var root = GameLocator.Normalize(commandLinePath) ?? GameLocator.Normalize(_settings.GameRoot) ?? GameLocator.Find();
+        GameRunning = GameLocator.IsGameRunning();
+        _gameTimer.Start();
+        if (root == null)
+        {
+            Status = "Could not find Crimson Desert. Use Browse to pick the game folder.";
+            return;
+        }
+        SetGameRoot(root);
+    }
+
+    private void SetGameRoot(string root)
+    {
+        GameRoot = root;
+        _settings.GameRoot = root;
+        _watcher.Watch(ModScanner.PluginFolders(root));
+        Rescan();
+        var last = Mods.FirstOrDefault(m => string.Equals(m.Id, _settings.LastMod, StringComparison.OrdinalIgnoreCase));
+        SelectedMod = last ?? Mods.FirstOrDefault(FilterMod);
+    }
+
+    public static string CommunityFolder => Path.Combine(AppContext.BaseDirectory, "inimeta");
+
+    public void Rescan()
+    {
+        if (GameRoot == null) return;
+        List<ModInfo> infos;
+        try { infos = ModScanner.Scan(GameRoot, Directory.Exists(CommunityFolder) ? CommunityFolder : null); }
+        catch (Exception ex)
+        {
+            Status = "Could not read the plugin folder: " + ex.Message;
+            return;
+        }
+        var selectedId = SelectedMod?.Id;
+        foreach (var info in infos)
+        {
+            var existing = Mods.FirstOrDefault(m => string.Equals(m.Id, info.Id, StringComparison.OrdinalIgnoreCase));
+            if (existing != null) existing.Update(info);
+            else Mods.Add(new ModViewModel(this, info));
+        }
+        foreach (var gone in Mods.Where(m => !infos.Any(i => string.Equals(i.Id, m.Id, StringComparison.OrdinalIgnoreCase))).ToList())
+            Mods.Remove(gone);
+
+        // Plugins first, then ini files without one, each alphabetical.
+        var sorted = Mods.OrderBy(m => m.Info.HasPlugin ? 0 : 1).ThenBy(m => m.Name, StringComparer.OrdinalIgnoreCase).ToList();
+        for (var i = 0; i < sorted.Count; i++)
+        {
+            var at = Mods.IndexOf(sorted[i]);
+            if (at != i) Mods.Move(at, i);
+        }
+        if (selectedId != null && SelectedMod == null)
+            SelectedMod = Mods.FirstOrDefault(m => string.Equals(m.Id, selectedId, StringComparison.OrdinalIgnoreCase));
+        var plugins = Mods.Count(m => m.Info.HasPlugin);
+        Status = $"Found {plugins} plugin{(plugins == 1 ? "" : "s")} and {Mods.Count - plugins} other ini file{(Mods.Count - plugins == 1 ? "" : "s")} in {BinFolder}.";
+    }
+
+    private bool FilterMod(ModViewModel m)
+    {
+        if (!ShowIniOnly && !m.Info.HasPlugin) return false;
+        return _modFilter.Length == 0 || m.Name.Contains(_modFilter, StringComparison.OrdinalIgnoreCase)
+               || m.Files.Any(f => f.FileName.Contains(_modFilter, StringComparison.OrdinalIgnoreCase));
+    }
+
+    // ------------------------------------------------------------ watching
+
+    private void OnFilesChanged(IReadOnlyCollection<string> paths)
+    {
+        var rescan = false;
+        foreach (var path in paths)
+        {
+            var ext = Path.GetExtension(path).ToLowerInvariant();
+            if (ext is ".asi" or ".inimeta") { rescan = true; continue; }
+            var owner = Mods.SelectMany(m => m.Files).FirstOrDefault(f => string.Equals(f.Path, path, StringComparison.OrdinalIgnoreCase));
+            if (owner == null) { rescan |= File.Exists(path); continue; }
+            if (owner.Sections.Count > 0 || !owner.Exists) owner.OnChangedOnDisk();
+        }
+        if (rescan) Rescan();
+        foreach (var m in Mods) m.RaiseChanges();
+    }
+
+    public void OnFileStateChanged()
+    {
+        Raise(nameof(ChangeSummary));
+        SelectedMod?.RaiseChanges();
+        CommandManager.InvalidateRequerySuggested();
+    }
+
+    // ------------------------------------------------------------ commands
+
+    private void Browse()
+    {
+        var dlg = new OpenFolderDialog
+        {
+            Title = "Choose the Crimson Desert folder (the one with bin64 in it)",
+            InitialDirectory = GameRoot ?? @"C:\Program Files (x86)\Steam\steamapps\common",
+        };
+        if (dlg.ShowDialog() != true) return;
+        var root = GameLocator.Normalize(dlg.FolderName);
+        if (root == null)
+        {
+            MessageBox.Show($"{GameLocator.ExeName} is not in that folder or in a bin64 folder inside it.", "INI Master",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+        if (!ConfirmDiscard()) return;
+        Mods.Clear();
+        SelectedMod = null;
+        SetGameRoot(root);
+    }
+
+    public void SaveAll()
+    {
+        foreach (var f in Mods.SelectMany(m => m.Files).Where(f => f.HasChanges).ToList()) f.Save();
+    }
+
+    public bool HasUnsaved => Mods.Any(m => m.HasChanges);
+
+    /// Asks before throwing edits away. False means stay.
+    public bool ConfirmDiscard()
+    {
+        foreach (var f in Mods.SelectMany(m => m.Files)) f.FlushPendingSave();
+        if (!HasUnsaved) return true;
+        var r = MessageBox.Show($"There are unsaved changes ({ChangeSummary}). Save them first?", "INI Master",
+            MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
+        if (r == MessageBoxResult.Cancel) return false;
+        if (r == MessageBoxResult.Yes) SaveAll();
+        return true;
+    }
+
+    public void Shutdown()
+    {
+        _gameTimer.Stop();
+        _watcher.Dispose();
+        _settings.Save();
+    }
+
+    private void OpenBackups()
+    {
+        var dir = IniStore.BackupFolder(CurrentFile!.Path);
+        Directory.CreateDirectory(dir);
+        OpenShell(dir);
+    }
+
+    private void ExportMeta()
+    {
+        var f = CurrentFile!;
+        var dlg = new SaveFileDialog
+        {
+            Title = "Save a metadata template for this ini",
+            FileName = Path.GetFileNameWithoutExtension(f.Path) + ModScanner.SidecarExtension,
+            Filter = "INI Master metadata (*.inimeta)|*.inimeta|All files|*.*",
+            InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
+        };
+        if (dlg.ShowDialog() != true) return;
+        try
+        {
+            var bytes = IniStore.ReadBytes(f.Path);
+            var view = IniView.Build(f.Target, bytes == null ? null : IniDocument.Load(bytes));
+            File.WriteAllText(dlg.FileName, MetaExporter.ToJson(view, f.FileName));
+            Status = $"Wrote {Path.GetFileName(dlg.FileName)}. Edit it, then ship it next to the ini or embed it in the plugin.";
+        }
+        catch (Exception ex) { Status = "Could not write the template: " + ex.Message; }
+    }
+
+    private void OpenGuide()
+    {
+        var local = Path.Combine(AppContext.BaseDirectory, "docs", "METADATA.md");
+        if (File.Exists(local)) OpenShell(local);
+        else MessageBox.Show(GuideText, "Adding help for INI Master", MessageBoxButton.OK, MessageBoxImage.Information);
+    }
+
+    public const string GuideText =
+        "INI Master reads help for a setting from three places, and later ones win:\n\n" +
+        "1. The ini's own comments. The comment lines directly above a key are its help. " +
+        "Lines like \";   0  off\" and \";   1  on\" become choices, and \"; ---- name\" starts a group. " +
+        "A comment line that starts with ;@ sets things exactly, for example:\n" +
+        "   ;@ type=int min=0 max=100 unit=% label=\"Use cost\"\n\n" +
+        "2. A file named after the ini with the .inimeta extension, next to it. " +
+        "It holds JSON, or an annotated copy of the default ini.\n\n" +
+        "3. The plugin itself. Add the same .inimeta file to the plugin's .rc file:\n" +
+        "   INIMETA INIMETA \"MyMod.inimeta\"\n\n" +
+        "Tools > Export metadata template writes a starting .inimeta for the selected ini.";
+
+    private static void OpenShell(string path)
+    {
+        try { Process.Start(new ProcessStartInfo(path) { UseShellExecute = true }); }
+        catch { }
+    }
+}

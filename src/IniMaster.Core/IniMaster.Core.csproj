@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>IniMaster.Core</RootNamespace>
+    <NoWarn>$(NoWarn);CS1591;CS1587</NoWarn>
+  </PropertyGroup>
+</Project>

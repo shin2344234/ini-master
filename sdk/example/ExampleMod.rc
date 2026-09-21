@@ -1,0 +1,3 @@
+// The whole INI Master integration for a plugin with a resource script: one
+// line. The resource type must be INIMETA; the name can be anything.
+INIMETA INIMETA "ExampleMod.inimeta"

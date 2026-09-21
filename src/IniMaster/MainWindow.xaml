@@ -1,0 +1,450 @@
+<Window x:Class="IniMaster.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:IniMaster.ViewModels"
+        Title="INI Master" Width="1280" Height="820" MinWidth="900" MinHeight="560"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource Bg}" Foreground="{StaticResource Text}"
+        FontFamily="{StaticResource BodyFont}" FontSize="14"
+        TextOptions.TextFormattingMode="Display" UseLayoutRounding="True">
+
+    <Window.InputBindings>
+        <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveCommand}" />
+        <KeyBinding Key="S" Modifiers="Control+Shift" Command="{Binding SaveAllCommand}" />
+        <KeyBinding Key="F5" Command="{Binding RescanCommand}" />
+    </Window.InputBindings>
+
+    <Window.Resources>
+        <!-- A note from the ini: a paragraph between settings, in a child panel. -->
+        <DataTemplate DataType="{x:Type vm:NoteViewModel}">
+            <Border Margin="6,4,6,8" Padding="12,8" Background="{StaticResource ChildBg}"
+                    BorderBrush="{StaticResource BronzeDim}" BorderThickness="1"
+                    Visibility="{Binding IsVisible, Converter={StaticResource Visible}}">
+                <TextBlock Text="{Binding Text}" Style="{StaticResource Secondary}" />
+            </Border>
+        </DataTemplate>
+
+        <!-- A group inside a section: smaller serif in dim gold over a faint rule. -->
+        <DataTemplate DataType="{x:Type vm:GroupViewModel}">
+            <StackPanel Margin="6,14,6,4" Visibility="{Binding IsVisible, Converter={StaticResource Visible}}">
+                <TextBlock Text="{Binding Title}" FontFamily="{StaticResource SerifFont}" FontSize="14.5"
+                           Foreground="{StaticResource GoldDim}" />
+                <Border Height="1" Margin="0,4,0,0" Background="{StaticResource BronzeDim}" HorizontalAlignment="Stretch" />
+            </StackPanel>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:SettingViewModel}">
+            <Border x:Name="Row" Padding="8,7" Background="Transparent" BorderBrush="Transparent" BorderThickness="2,0,0,0"
+                    Visibility="{Binding IsVisible, Converter={StaticResource Visible}}"
+                    PreviewMouseDown="Row_Select" GotKeyboardFocus="Row_Select"
+                    ToolTip="{Binding ToolTipText}" ToolTipService.ShowDuration="60000" ToolTipService.InitialShowDelay="600">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" MinWidth="240" />
+                        <ColumnDefinition Width="Auto" MinWidth="360" />
+                        <ColumnDefinition Width="80" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Margin="0,0,16,0" VerticalAlignment="Center">
+                        <WrapPanel>
+                            <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding Key}" Margin="8,0,0,0" FontSize="11" VerticalAlignment="Center"
+                                       FontFamily="{StaticResource MonoFont}" Style="{StaticResource Secondary}" />
+                            <Border Style="{StaticResource Pill}" Margin="8,0,0,0" BorderBrush="{StaticResource Warn}"
+                                    Visibility="{Binding LiveBadge, Converter={StaticResource Visible}}"
+                                    ToolTip="This plugin reads the setting at startup. Saving works now; restart the game to see it.">
+                                <TextBlock Text="{Binding LiveBadge}" FontSize="11" Foreground="{StaticResource Warn}" />
+                            </Border>
+                            <Border Style="{StaticResource Pill}" Margin="8,0,0,0"
+                                    Visibility="{Binding InFile, Converter={StaticResource Hidden}}"
+                                    ToolTip="The file does not have this key. Changing it adds the key.">
+                                <TextBlock Text="not in file" FontSize="11" Foreground="{StaticResource TextDim}" />
+                            </Border>
+                        </WrapPanel>
+                        <TextBlock Text="{Binding HelpShort}" Margin="0,2,0,0" FontSize="12.5" Style="{StaticResource Secondary}"
+                                   Visibility="{Binding HelpShort, Converter={StaticResource Visible}}" />
+                        <TextBlock Text="{Binding Error}" Margin="0,3,0,0" FontSize="12.5" TextWrapping="Wrap"
+                                   Foreground="{StaticResource CrimsonHi}"
+                                   Visibility="{Binding HasError, Converter={StaticResource Visible}}" />
+                        <TextBlock Text="{Binding Warning}" Margin="0,3,0,0" FontSize="12.5" TextWrapping="Wrap"
+                                   Foreground="{StaticResource Warn}"
+                                   Visibility="{Binding HasWarning, Converter={StaticResource Visible}}" />
+                    </StackPanel>
+
+                    <ContentControl Grid.Column="1" Content="{Binding}" VerticalAlignment="Center" HorizontalAlignment="Left" Focusable="False"
+                                    IsEnabled="{Binding ReadOnly, Converter={StaticResource Not}}">
+                        <ContentControl.Style>
+                            <Style TargetType="ContentControl">
+                                <Setter Property="ContentTemplate" Value="{StaticResource TextEditor}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Type}" Value="int">
+                                        <Setter Property="ContentTemplate" Value="{StaticResource NumberEditor}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Type}" Value="float">
+                                        <Setter Property="ContentTemplate" Value="{StaticResource NumberEditor}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding HasSlider}" Value="True">
+                                        <Setter Property="ContentTemplate" Value="{StaticResource SliderEditor}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Type}" Value="bool">
+                                        <Setter Property="ContentTemplate" Value="{StaticResource BoolEditor}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Type}" Value="enum">
+                                        <Setter Property="ContentTemplate" Value="{StaticResource EnumEditor}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Type}" Value="key">
+                                        <Setter Property="ContentTemplate" Value="{StaticResource KeyEditor}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding DataContext.RawValues, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                        <Setter Property="ContentTemplate" Value="{StaticResource TextEditor}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ContentControl.Style>
+                    </ContentControl>
+
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <Button Style="{StaticResource IconButton}" Content="&#xE7A7;" Command="{Binding RevertCommand}"
+                                Visibility="{Binding IsDirty, Converter={StaticResource Visible}}" ToolTip="Undo this change (back to the value in the file)" />
+                        <Button Style="{StaticResource IconButton}" Content="&#xE72C;" Command="{Binding ResetCommand}"
+                                Visibility="{Binding CanReset, Converter={StaticResource Visible}}" ToolTip="{Binding R.Default, StringFormat='Back to the default: {0}'}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+            <DataTemplate.Triggers>
+                <Trigger SourceName="Row" Property="IsMouseOver" Value="True">
+                    <Setter TargetName="Row" Property="Background" Value="{StaticResource RowHover}" />
+                </Trigger>
+                <!-- An unsaved change: a gold bar on the left, as the list marks its selection. -->
+                <DataTrigger Binding="{Binding IsDirty}" Value="True">
+                    <Setter TargetName="Row" Property="Background" Value="{StaticResource RowDirty}" />
+                    <Setter TargetName="Row" Property="BorderBrush" Value="{StaticResource Gold}" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <!-- A section: the serif name in gold with a bronze rule under it, no card. -->
+        <DataTemplate DataType="{x:Type vm:SectionViewModel}">
+            <StackPanel Margin="0,4,0,18" Visibility="{Binding IsVisible, Converter={StaticResource Visible}}">
+                <WrapPanel Margin="2,0,2,0">
+                    <TextBlock Text="{Binding Title}" Style="{StaticResource SectionTitle}" />
+                    <TextBlock Text="{Binding Name, StringFormat='[{0}]'}" Margin="10,0,0,2" VerticalAlignment="Bottom"
+                               FontFamily="{StaticResource MonoFont}" FontSize="11" Style="{StaticResource Secondary}"
+                               Visibility="{Binding ShowName, Converter={StaticResource Visible}}" />
+                </WrapPanel>
+                <Border Height="1" Margin="0,5,0,6" Background="{StaticResource BronzeDim}" />
+                <TextBlock Text="{Binding Description}" Margin="2,0,2,8" Style="{StaticResource Secondary}"
+                           Visibility="{Binding Description, Converter={StaticResource Visible}}" />
+                <ItemsControl ItemsSource="{Binding Items}" Focusable="False" />
+            </StackPanel>
+        </DataTemplate>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- ============================================================ title strip -->
+        <StackPanel Margin="18,12,18,0">
+            <DockPanel LastChildFill="True">
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,18,0" VerticalAlignment="Center"
+                                ToolTip="Checked every two seconds. Saving works either way; a running game only notices if the plugin rereads its ini.">
+                        <Ellipse Width="8" Height="8" Margin="0,0,7,0" VerticalAlignment="Center">
+                            <Ellipse.Style>
+                                <Style TargetType="Ellipse">
+                                    <Setter Property="Fill" Value="{StaticResource TextDim}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding GameRunning}" Value="True">
+                                            <Setter Property="Fill" Value="{StaticResource Good}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Ellipse.Style>
+                        </Ellipse>
+                        <TextBlock Text="{Binding GameStateText}" FontSize="13">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{StaticResource TextDim}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding GameRunning}" Value="True">
+                                            <Setter Property="Foreground" Value="{StaticResource Good}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                    <CheckBox Content="Save as I edit" IsChecked="{Binding ApplyInstantly}" Margin="0,0,16,0" VerticalAlignment="Center"
+                              ToolTip="Write each change to the ini a moment after you make it, so a plugin that rereads its ini picks it up while you play." />
+                    <Button Command="{Binding SaveCommand}" Style="{StaticResource PrimaryButton}" Padding="16,5"
+                            ToolTip="Save this ini (Ctrl+S). Ctrl+Shift+S saves every file with changes.">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE74E;" FontFamily="{StaticResource IconFont}" Margin="0,1,8,0" VerticalAlignment="Center" />
+                            <TextBlock Text="Save" />
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="MoreButton" Style="{StaticResource IconButton}" Content="&#xE712;" Margin="8,0,0,0" Padding="10,7"
+                            ToolTip="More" Click="More_Click">
+                        <Button.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Save all files" InputGestureText="Ctrl+Shift+S" Command="{Binding SaveAllCommand}" />
+                                <MenuItem Header="Undo unsaved changes in this file" Command="{Binding RevertCommand}" />
+                                <Separator />
+                                <MenuItem Header="Open this ini in the default editor" Command="{Binding OpenIniCommand}" />
+                                <MenuItem Header="Open the plugin folder" Command="{Binding OpenFolderCommand}" />
+                                <MenuItem Header="Open backups of this ini" Command="{Binding OpenBackupsCommand}" />
+                                <MenuItem Header="Rescan plugins" InputGestureText="F5" Command="{Binding RescanCommand}" />
+                                <Separator />
+                                <MenuItem Header="Export metadata template..." Command="{Binding ExportMetaCommand}" />
+                                <MenuItem Header="How mod makers add help" Command="{Binding GuideCommand}" />
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="INI MASTER" FontFamily="{StaticResource SerifFont}" FontSize="22" Foreground="{StaticResource Gold}"
+                               VerticalAlignment="Center" />
+                    <TextBlock x:Name="VersionText" Margin="10,0,0,1" VerticalAlignment="Bottom" Style="{StaticResource Caption}" />
+                    <Button Command="{Binding BrowseCommand}" Margin="22,0,0,0" Padding="10,4" ToolTip="Choose the Crimson Desert folder">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE8B7;" FontFamily="{StaticResource IconFont}" Margin="0,1,8,0" VerticalAlignment="Center"
+                                       Foreground="{StaticResource GoldDim}" />
+                            <TextBlock Text="Game folder" />
+                        </StackPanel>
+                    </Button>
+                    <TextBlock Text="{Binding GameRootText}" Margin="12,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                               MaxWidth="440" Style="{StaticResource Caption}" TextWrapping="NoWrap" ToolTip="{Binding BinFolder}" />
+                </StackPanel>
+            </DockPanel>
+            <!-- The menu's double rule: bronze across, gold for the first third. -->
+            <Grid Margin="0,10,0,0" Height="6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="35*" />
+                    <ColumnDefinition Width="65*" />
+                </Grid.ColumnDefinitions>
+                <Border Grid.ColumnSpan="2" Height="1" VerticalAlignment="Top" Background="{StaticResource Bronze}" />
+                <Border Height="1" VerticalAlignment="Bottom" Background="{StaticResource GoldDim}" />
+            </Grid>
+        </StackPanel>
+
+        <!-- ============================================================ body -->
+        <Grid Grid.Row="1" Margin="0,8,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="ListColumn" Width="280" MinWidth="200" MaxWidth="520" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- mod list -->
+            <Border Margin="18,4,4,12" Background="{StaticResource Panel}" BorderBrush="{StaticResource BronzeDim}" BorderThickness="1">
+                <DockPanel Margin="10">
+                    <TextBlock DockPanel.Dock="Top" Text="Mods" Style="{StaticResource SectionTitle}" FontSize="16" Margin="2,0,0,6" />
+                    <Grid DockPanel.Dock="Top" Margin="0,0,0,8">
+                        <TextBox x:Name="ModFilterBox" Text="{Binding ModFilter, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBlock Text="Find a mod" Margin="9,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"
+                                   Style="{StaticResource Caption}"
+                                   Visibility="{Binding Text, ElementName=ModFilterBox, Converter={StaticResource Hidden}}" />
+                    </Grid>
+                    <CheckBox DockPanel.Dock="Bottom" Margin="2,10,0,0" IsChecked="{Binding ShowIniOnly}"
+                              ToolTip="Loader, upscaler and overlay settings such as winmm.ini or OptiScaler.ini.">
+                        <TextBlock Text="Show ini files without a plugin" FontSize="13" />
+                    </CheckBox>
+                    <ListBox ItemsSource="{Binding ModsView}" SelectedItem="{Binding SelectedMod}"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:ModViewModel}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{Binding Subtitle}" Style="{StaticResource Caption}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Border Style="{StaticResource Pill}" BorderBrush="{StaticResource GoldDim}"
+                                                Visibility="{Binding HasBadge, Converter={StaticResource Visible}}"
+                                                ToolTip="The mod maker added help for INI Master.">
+                                            <TextBlock Text="{Binding SourceBadge}" FontSize="10" Foreground="{StaticResource Gold}" />
+                                        </Border>
+                                        <Rectangle Width="7" Height="7" Margin="6,0,0,0" Fill="{StaticResource Gold}"
+                                                   Visibility="{Binding HasChanges, Converter={StaticResource Visible}}" ToolTip="Unsaved changes" />
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </Border>
+
+            <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Center" VerticalAlignment="Stretch"
+                          Background="Transparent" ResizeBehavior="PreviousAndNext" />
+
+            <!-- nothing selected / no game -->
+            <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="460"
+                        Visibility="{Binding HasSelection, Converter={StaticResource Hidden}}">
+                <TextBlock Text="No mod selected" Style="{StaticResource SectionTitle}" FontSize="22" HorizontalAlignment="Center" />
+                <TextBlock Margin="0,8,0,0" TextAlignment="Center" Style="{StaticResource Secondary}"
+                           Text="Pick a plugin on the left. If the list is empty, point INI Master at the Crimson Desert folder with the Game folder button." />
+            </StackPanel>
+
+            <!-- the selected mod -->
+            <Grid Grid.Column="2" Margin="8,4,18,8" DataContext="{Binding SelectedMod}"
+                  Visibility="{Binding DataContext.HasSelection, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource Visible}}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- header -->
+                <StackPanel Margin="2,0,2,10">
+                    <DockPanel>
+                        <ComboBox DockPanel.Dock="Right" MinWidth="200" ItemsSource="{Binding Files}" SelectedItem="{Binding SelectedFile}"
+                                  DisplayMemberPath="FileName" Visibility="{Binding HasManyFiles, Converter={StaticResource Visible}}"
+                                  SelectionChanged="File_Changed" />
+                        <WrapPanel>
+                            <TextBlock Text="{Binding Name}" FontFamily="{StaticResource SerifFont}" FontSize="26" Foreground="{StaticResource Gold}" />
+                            <TextBlock Text="{Binding SelectedFile.Meta.Version, StringFormat='v{0}'}" Margin="12,0,0,4" VerticalAlignment="Bottom"
+                                       Style="{StaticResource Secondary}" Visibility="{Binding SelectedFile.Meta.Version, Converter={StaticResource Visible}}" />
+                            <TextBlock Text="{Binding SelectedFile.Meta.Author, StringFormat='by {0}'}" Margin="10,0,0,4" VerticalAlignment="Bottom"
+                                       Style="{StaticResource Secondary}" Visibility="{Binding SelectedFile.Meta.Author, Converter={StaticResource Visible}}" />
+                            <TextBlock Margin="12,0,0,4" VerticalAlignment="Bottom" Visibility="{Binding SelectedFile.Meta.Url, Converter={StaticResource Visible}}">
+                                <Hyperlink NavigateUri="{Binding SelectedFile.Meta.Url}" RequestNavigate="Link_Navigate">Mod page</Hyperlink>
+                            </TextBlock>
+                        </WrapPanel>
+                    </DockPanel>
+                    <TextBlock Text="{Binding PluginText}" Margin="0,4,0,0" Style="{StaticResource Caption}" />
+                    <TextBlock Text="{Binding MetaText}" Style="{StaticResource Caption}" />
+                    <Expander Margin="0,8,0,0" Header="About this mod" IsExpanded="False"
+                              Visibility="{Binding SelectedFile.Meta.Description, Converter={StaticResource Visible}}">
+                        <Border Margin="0,6,0,0" Padding="12,8" Background="{StaticResource ChildBg}" BorderBrush="{StaticResource BronzeDim}" BorderThickness="1">
+                            <ScrollViewer MaxHeight="220" VerticalScrollBarVisibility="Auto">
+                                <TextBlock Text="{Binding SelectedFile.Meta.Description}" TextWrapping="Wrap" Style="{StaticResource Secondary}" />
+                            </ScrollViewer>
+                        </Border>
+                    </Expander>
+
+                    <!-- live banner -->
+                    <Border Margin="0,10,0,0" Padding="12,7" Background="{StaticResource ChildBg}" BorderBrush="{StaticResource GoldDim}" BorderThickness="2,0,0,0"
+                            Visibility="{Binding SelectedFile.GameRunning, Converter={StaticResource Visible}}">
+                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource GoldDim}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Text" Value="The game is running. INI Master saves straight to the file; whether the game notices before a restart depends on the plugin, and this one does not say." />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SelectedFile.ModLive}" Value="True">
+                                            <Setter Property="Text" Value="The game is running and this plugin rereads its ini, so saved changes apply in game within a moment." />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding SelectedFile.ModLive}" Value="False">
+                                            <Setter Property="Text" Value="The game is running, but this plugin reads its ini only at startup. Changes save now and apply the next time the game starts." />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Border>
+
+                    <!-- missing file -->
+                    <Border Margin="0,10,0,0" Padding="12,7" Background="{StaticResource ChildBg}" BorderBrush="{StaticResource Warn}" BorderThickness="2,0,0,0"
+                            Visibility="{Binding SelectedFile.Exists, Converter={StaticResource Hidden}}">
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right" Content="Create it" Margin="12,0,0,0" Command="{Binding SelectedFile.CreateCommand}"
+                                    Visibility="{Binding SelectedFile.CanCreate, Converter={StaticResource Visible}}" />
+                            <TextBlock Text="{Binding SelectedFile.MissingText}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                        </DockPanel>
+                    </Border>
+                    <TextBlock Text="{Binding SelectedFile.LoadError}" Margin="0,8,0,0" Foreground="{StaticResource CrimsonHi}"
+                               TextWrapping="Wrap" Visibility="{Binding SelectedFile.LoadError, Converter={StaticResource Visible}}" />
+                </StackPanel>
+
+                <!-- tabs -->
+                <TabControl Grid.Row="1" SelectedIndex="{Binding DataContext.Tab, RelativeSource={RelativeSource AncestorType=Window}}">
+                    <TabItem Header="Settings">
+                        <DockPanel Margin="0,10,0,0">
+                            <DockPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <CheckBox Content="Show advanced" Margin="16,0,0,0"
+                                              IsChecked="{Binding DataContext.ShowAdvanced, RelativeSource={RelativeSource AncestorType=Window}}"
+                                              ToolTip="Settings the mod maker marked as advanced." />
+                                    <CheckBox Content="Plain text values" Margin="16,0,0,0"
+                                              IsChecked="{Binding DataContext.RawValues, RelativeSource={RelativeSource AncestorType=Window}}"
+                                              ToolTip="Edit every value as the text in the file, for when a control guessed wrong." />
+                                </StackPanel>
+                                <Grid HorizontalAlignment="Left" Width="360">
+                                    <TextBox x:Name="FilterBox" Text="{Binding DataContext.Filter, RelativeSource={RelativeSource AncestorType=Window}, UpdateSourceTrigger=PropertyChanged}" />
+                                    <TextBlock Text="Find a setting (Ctrl+F)" Margin="9,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"
+                                               Style="{StaticResource Caption}"
+                                               Visibility="{Binding Text, ElementName=FilterBox, Converter={StaticResource Hidden}}" />
+                                </Grid>
+                            </DockPanel>
+                            <ScrollViewer x:Name="SettingsScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                                          PanningMode="VerticalOnly">
+                                <ItemsControl ItemsSource="{Binding SelectedFile.Sections}" Focusable="False" Margin="0,0,10,0" />
+                            </ScrollViewer>
+                        </DockPanel>
+                    </TabItem>
+                    <TabItem Header="File text">
+                        <DockPanel Margin="0,10,0,0">
+                            <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                    <Button Content="Discard text edits" Command="{Binding SelectedFile.ReloadRawCommand}" Margin="0,0,8,0" />
+                                    <Button Content="Save text" Style="{StaticResource PrimaryButton}" Command="{Binding SelectedFile.SaveRawCommand}" />
+                                </StackPanel>
+                                <TextBlock VerticalAlignment="Center" Style="{StaticResource Caption}"
+                                           Text="The file exactly as it is on disk. Edits here are saved as typed, comments and all." />
+                            </DockPanel>
+                            <TextBox Text="{Binding SelectedFile.RawText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" AcceptsTab="True"
+                                     FontFamily="{StaticResource MonoFont}" FontSize="13" TextWrapping="NoWrap"
+                                     VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
+                                     VerticalContentAlignment="Top" Background="{StaticResource ChildBg}" />
+                        </DockPanel>
+                    </TabItem>
+                </TabControl>
+
+                <!-- details of the selected setting -->
+                <GridSplitter Grid.Row="2" Height="6" HorizontalAlignment="Stretch" Background="Transparent" ResizeDirection="Rows"
+                              Visibility="{Binding DataContext.HasSelectedSetting, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource Visible}}" />
+                <Border Grid.Row="3" Padding="14,10" MaxHeight="320"
+                        Background="{StaticResource Panel}" BorderBrush="{StaticResource Bronze}" BorderThickness="1"
+                        DataContext="{Binding DataContext.SelectedSetting, RelativeSource={RelativeSource AncestorType=Window}}"
+                        Visibility="{Binding DataContext.HasSelectedSetting, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource Visible}}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="0,0,16,0">
+                                <TextBlock Text="{Binding Label}" Style="{StaticResource SectionTitle}" FontSize="16" />
+                                <TextBlock Text="{Binding Help}" Margin="0,6,0,0" TextWrapping="Wrap"
+                                           Visibility="{Binding HasHelp, Converter={StaticResource Visible}}" />
+                                <TextBlock Text="Nobody wrote help for this one yet." Margin="0,6,0,0" Style="{StaticResource Secondary}"
+                                           Visibility="{Binding HasHelp, Converter={StaticResource Hidden}}" />
+                            </StackPanel>
+                        </ScrollViewer>
+                        <Border Grid.Column="1" BorderBrush="{StaticResource BronzeDim}" BorderThickness="1,0,0,0" Padding="14,0,0,0">
+                            <TextBlock Text="{Binding Facts}" MaxWidth="380" FontSize="12.5" TextWrapping="Wrap" Style="{StaticResource Secondary}" />
+                        </Border>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <!-- ============================================================ status -->
+        <Border Grid.Row="2" Padding="18,6" BorderThickness="0,1,0,0" BorderBrush="{StaticResource BronzeDim}" Background="{StaticResource Panel}">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Right" Text="{Binding ChangeSummary}" Margin="16,0,0,0" Foreground="{StaticResource Gold}" />
+                <TextBlock Text="{Binding Status}" Style="{StaticResource Caption}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"
+                           ToolTip="{Binding Status}" />
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>

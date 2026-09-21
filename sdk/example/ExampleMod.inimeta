@@ -1,0 +1,63 @@
+{
+  // INI Master metadata for ExampleMod.ini. JSON with comments and trailing
+  // commas allowed. Every field is optional.
+  "inimeta": 1,
+  "name": "Example Mod",
+  "version": "1.0.0",
+  "author": "You",
+  "url": "https://www.nexusmods.com/crimsondesert",
+  "ini": "ExampleMod.ini",
+  "live": true,
+  "description": "Shows what INI Master does with metadata. Nothing here touches the game.",
+  "sections": {
+    "settings": {
+      "label": "General",
+      "description": "Everything the example reads.",
+      "keys": {
+        "Enabled": {
+          "type": "bool",
+          "help": "1 turns the mod on. 0 loads it and does nothing.",
+          "default": "1",
+          "live": false
+        },
+        "Speed": {
+          "label": "Travel speed",
+          "type": "float",
+          "min": 0.5,
+          "max": 4,
+          "default": "1.0",
+          "group": "Movement",
+          "help": [
+            "How fast you move, as a multiple of the game's own speed.",
+            "",
+            "Above 2 the camera struggles to keep up."
+          ]
+        },
+        "Quality": {
+          "type": "enum",
+          "group": "Movement",
+          "default": "1",
+          "options": [
+            { "value": "0", "label": "Low" },
+            { "value": "1", "label": "Medium" },
+            { "value": "2", "label": "High" }
+          ]
+        },
+        "MenuKey": {
+          "label": "Menu key",
+          "type": "key",
+          "format": "name",
+          "default": "Ctrl+F7",
+          "help": "Opens the example menu. Ctrl, Shift and Alt combine with +."
+        },
+        "LogPath": {
+          "label": "Log file",
+          "type": "string",
+          "advanced": true,
+          "default": "ExampleMod.log",
+          "help": "Where the log goes, relative to bin64."
+        }
+      }
+    }
+  }
+}
