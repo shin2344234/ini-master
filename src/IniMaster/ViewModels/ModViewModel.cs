@@ -71,7 +71,7 @@ public sealed class ModViewModel : ObservableObject
         }
     }
 
-    public bool HasChanges => Files.Any(f => f.HasChanges);
+    public bool HasChanges => Files.Any(f => f.HasUnsavedWork);
 
     public void EnsureLoaded()
     {

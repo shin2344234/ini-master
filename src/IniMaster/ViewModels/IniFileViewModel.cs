@@ -50,8 +50,8 @@ public sealed class IniFileViewModel : ObservableObject
         Target = target;
         _saveTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(400) };
         _saveTimer.Tick += (_, _) => { _saveTimer.Stop(); Save(); };
-        SaveRawCommand = new RelayCommand(SaveRaw, () => _rawDirty);
-        ReloadRawCommand = new RelayCommand(() => { _rawText = null; _rawDirty = false; Raise(nameof(RawText), nameof(RawDirty)); });
+        SaveRawCommand = new RelayCommand(() => SaveRaw(),() => _rawDirty);
+        ReloadRawCommand = new RelayCommand(() => { _rawText = null; _rawDirty = false; Raise(nameof(RawText), nameof(RawDirty)); _main.OnFileStateChanged(); });
         CreateCommand = new RelayCommand(CreateFile, () => !Exists);
     }
 
@@ -68,6 +68,9 @@ public sealed class IniFileViewModel : ObservableObject
     public RelayCommand CreateCommand { get; }
     public string? LoadError { get; private set; }
     public bool HasChanges => _pending.Count > 0;
+
+    /// Setting edits or an unsaved text edit on the Text tab.
+    public bool HasUnsavedWork => HasChanges || _rawDirty;
     public int ChangeCount => _pending.Count;
     public bool HasErrors => AllSettings.Any(s => s.HasError && _pending.ContainsKey((s.Section, s.Key)));
     public bool CanCreate => !Exists && (Meta.DefaultIniText != null || Meta.Sections.Values.Any(s => s.Keys.Count > 0));
@@ -334,14 +337,20 @@ public sealed class IniFileViewModel : ObservableObject
         {
             if (_rawText == value) return;
             _rawText = value;
+            var was = _rawDirty;
             _rawDirty = true;
             Raise(nameof(RawText), nameof(RawDirty));
+            if (!was) _main.OnFileStateChanged();
         }
     }
 
     public bool RawDirty => _rawDirty;
 
-    private void SaveRaw()
+    /// Saves the text edit if there is one, since it holds the whole file,
+    /// and the setting edits otherwise.
+    public bool SaveAllWork() => _rawDirty ? SaveRaw() : Save();
+
+    private bool SaveRaw()
     {
         try
         {
@@ -352,9 +361,12 @@ public sealed class IniFileViewModel : ObservableObject
             _pending.Clear();
             Load();
             Raise(nameof(RawDirty));
+            _main.OnFileStateChanged();
             _main.Status = result.Changed ? $"Saved {FileName} as text." : "Nothing to save; the text matches the file.";
+            return true;
         }
         catch (Exception ex) { _main.Status = $"Could not save {FileName}: {ex.Message}"; }
+        return false;
     }
 
     // ------------------------------------------------------------ create

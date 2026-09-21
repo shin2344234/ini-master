@@ -176,7 +176,7 @@ public sealed class MainViewModel : ObservableObject
     {
         get
         {
-            var n = Mods.SelectMany(m => m.Files).Sum(f => f.ChangeCount);
+            var n = Mods.SelectMany(m => m.Files).Sum(f => f.ChangeCount + (f.RawDirty ? 1 : 0));
             return n == 0 ? "" : n == 1 ? "1 unsaved change" : $"{n} unsaved changes";
         }
     }
@@ -297,7 +297,7 @@ public sealed class MainViewModel : ObservableObject
 
     public void SaveAll()
     {
-        foreach (var f in Mods.SelectMany(m => m.Files).Where(f => f.HasChanges).ToList()) f.Save();
+        foreach (var f in Mods.SelectMany(m => m.Files).Where(f => f.HasUnsavedWork).ToList()) f.SaveAllWork();
     }
 
     public bool HasUnsaved => Mods.Any(m => m.HasChanges);
@@ -310,8 +310,12 @@ public sealed class MainViewModel : ObservableObject
         var r = MessageBox.Show($"There are unsaved changes ({ChangeSummary}). Save them first?", "INI Master",
             MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
         if (r == MessageBoxResult.Cancel) return false;
-        if (r == MessageBoxResult.Yes) SaveAll();
-        return true;
+        if (r == MessageBoxResult.No) return true;
+        SaveAll();
+        if (!HasUnsaved) return true;
+        MessageBox.Show($"Some changes were not saved ({ChangeSummary}).\n\n{Status}\n\nFix them, or choose No next time to discard them.",
+            "INI Master", MessageBoxButton.OK, MessageBoxImage.Warning);
+        return false;
     }
 
     public void Shutdown()

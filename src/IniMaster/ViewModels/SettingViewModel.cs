@@ -18,7 +18,7 @@ public sealed class NoteViewModel : ItemViewModel
 
 public sealed class GroupViewModel : ItemViewModel
 {
-    public GroupViewModel(string title) => Title = char.ToUpperInvariant(title[0]) + title[1..];
+    public GroupViewModel(string title) => Title = title.Length == 0 ? title : char.ToUpperInvariant(title[0]) + title[1..];
     public string Title { get; }
 }
 

@@ -69,7 +69,7 @@ public sealed class IniView
                     switch (item.Kind)
                     {
                         case LayoutKind.Note: items.Add(new ViewNote(item.Text)); break;
-                        case LayoutKind.Group: items.Add(new ViewGroup(item.Text)); break;
+                        case LayoutKind.Group: if (!string.IsNullOrWhiteSpace(item.Text)) items.Add(new ViewGroup(item.Text)); break;
                         case LayoutKind.Setting:
                             if (!seen.Add(item.Text)) break;
                             var km = sm?.Keys.GetValueOrDefault(item.Text) ?? new KeyMeta();

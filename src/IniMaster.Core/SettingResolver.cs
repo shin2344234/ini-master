@@ -148,7 +148,7 @@ public static partial class SettingResolver
             Help = m.Help,
             Tooltip = m.Tooltip,
             Default = m.Default,
-            Group = m.Group,
+            Group = string.IsNullOrWhiteSpace(m.Group) ? null : m.Group.Trim(),
             Live = m.Live,
             Advanced = m.Advanced ?? false,
             Hidden = m.Hidden ?? false,

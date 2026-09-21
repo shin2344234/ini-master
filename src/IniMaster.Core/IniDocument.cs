@@ -35,6 +35,11 @@ public sealed class IniLine
     /// when there is none.
     public string InlineComment { get; private set; } = "";
 
+    /// The terminator that followed this line in the file, so a file with
+    /// mixed line endings saves byte for byte. Null for a line the file did
+    /// not end, or one added since, which take the document's NewLine.
+    public string? Ending { get; internal set; }
+
     public IniLine(string text) => SetText(text);
 
     internal void SetText(string text)
@@ -113,13 +118,26 @@ public sealed class IniLine
 
     internal void ReplaceValue(string newValue)
     {
-        var raw = IsQuoted || NeedsQuotes(newValue) ? "\"" + newValue + "\"" : newValue;
+        // An empty value in front of an inline comment is written as "", or
+        // the next read would take the comment for the value.
+        var quote = IsQuoted || NeedsQuotes(newValue) || (newValue.Length == 0 && InlineComment.Length > 0);
+        var raw = quote ? "\"" + newValue + "\"" : newValue;
         SetText(Text[..ValueStart] + raw + Text[(ValueStart + ValueLength)..]);
     }
 
-    // A value with leading or trailing spaces would lose them on read, so
-    // quote it the way GetPrivateProfileString expects.
-    private static bool NeedsQuotes(string v) => v.Length > 0 && (char.IsWhiteSpace(v[0]) || char.IsWhiteSpace(v[^1]));
+    internal static string Format(string value) => NeedsQuotes(value) ? "\"" + value + "\"" : value;
+
+    // Leading or trailing spaces would be lost on read, and a ';' or '#'
+    // after whitespace would start an inline comment, so quote those values
+    // the way GetPrivateProfileString expects.
+    private static bool NeedsQuotes(string v)
+    {
+        if (v.Length == 0) return false;
+        if (char.IsWhiteSpace(v[0]) || char.IsWhiteSpace(v[^1])) return true;
+        for (var i = 1; i < v.Length; i++)
+            if ((v[i] == ';' || v[i] == '#') && (v[i - 1] == ' ' || v[i - 1] == '\t')) return true;
+        return false;
+    }
 }
 
 /// A format-preserving ini file. Lookups follow the Windows profile API:
@@ -140,9 +158,15 @@ public sealed class IniDocument
         var nl = text.IndexOf('\n');
         doc.NewLine = nl > 0 && text[nl - 1] == '\r' ? "\r\n" : nl >= 0 ? "\n" : "\r\n";
         doc.EndsWithNewLine = text.Length == 0 || text.EndsWith('\n');
-        var parts = text.Replace("\r\n", "\n").Split('\n');
+        var parts = text.Split('\n');
         var count = doc.EndsWithNewLine && parts.Length > 0 ? parts.Length - 1 : parts.Length;
-        for (var i = 0; i < count; i++) doc.Lines.Add(new IniLine(parts[i].TrimEnd('\r')));
+        for (var i = 0; i < count; i++)
+        {
+            var body = parts[i].TrimEnd('\r');
+            var line = new IniLine(body);
+            if (i < parts.Length - 1) line.Ending = parts[i][body.Length..] + "\n";
+            doc.Lines.Add(line);
+        }
         doc.Reindex();
         return doc;
     }
@@ -161,7 +185,7 @@ public sealed class IniDocument
         for (var i = 0; i < Lines.Count; i++)
         {
             sb.Append(Lines[i].Text);
-            if (i < Lines.Count - 1 || EndsWithNewLine) sb.Append(NewLine);
+            if (i < Lines.Count - 1 || EndsWithNewLine) sb.Append(Lines[i].Ending ?? NewLine);
         }
         return sb.ToString();
     }
@@ -205,8 +229,7 @@ public sealed class IniDocument
             return true;
         }
         var sep = Lines.Any(l => l.Kind == IniLineKind.Key && l.Text.Contains(" = ")) ? " = " : "=";
-        var newLine = new IniLine(key + sep + value) ;
-        if (newLine.Value != value) newLine.ReplaceValue(value);
+        var newLine = new IniLine(key + sep + IniLine.Format(value));
 
         var header = Lines.FindIndex(l => l.Kind == IniLineKind.Section && string.Equals(l.Section, section, StringComparison.OrdinalIgnoreCase));
         if (header < 0 && section.Length > 0)
