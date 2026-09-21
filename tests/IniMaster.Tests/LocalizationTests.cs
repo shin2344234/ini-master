@@ -125,14 +125,17 @@ public partial class LocalizationTests
     }
 
     [Fact]
-    public void GermanIsBuiltIn()
+    public void TranslationsAreBuiltIn()
     {
         try
         {
             Assert.Equal("built in", Loc.Use("de-DE", Array.Empty<string>()));
             Assert.Equal("Speichern", Loc.T("Save"));
             Assert.Equal("3 ungespeicherte Änderungen", Loc.Plural(3, "1 unsaved change", "{0} unsaved changes"));
-            Assert.Contains("de", Loc.Available(Array.Empty<string>()));
+            Assert.Equal("built in", Loc.Use("fr-CA", Array.Empty<string>()));
+            Assert.Equal("Enregistrer", Loc.T("Save"));
+            Assert.Equal("Par défaut : 5", Loc.T("Default: {0}", "5"));
+            Assert.Equal(new[] { "en", "de", "fr" }, Loc.Available(Array.Empty<string>()));
         }
         finally { Loc.Use("en", Array.Empty<string>()); }
     }
@@ -178,7 +181,8 @@ public partial class LocalizationTests
             Assert.Equal("Not translated", Loc.T("Not translated"));
             Assert.Contains("de", Loc.Available(new[] { dir }));
 
-            Assert.Null(Loc.Use("fr", new[] { dir }));
+            // A language with no file here and none built in.
+            Assert.Null(Loc.Use("sw", new[] { dir }));
             Assert.Equal("Save", Loc.T("Save"));
         }
         finally

@@ -1,0 +1,167 @@
+# INI Master en français (fr). Traduction automatique. Aucun locuteur natif
+# ne l'a encore relue. Les corrections sont bienvenues sur GitHub
+# (github.com/shin2344234/ini-master).
+#
+# Une ligne par texte : l'anglais d'origine, une tabulation, puis la
+# traduction. \n représente un saut de ligne. Les lignes qui commencent par #
+# sont ignorées. Une ligne sans traduction après la tabulation reste affichée
+# en anglais.
+#
+# Chaque {0}, {1} et ainsi de suite doit être conservé. L'ordre peut changer,
+# mais une ligne qui en perd ou en ajoute un est ignorée au chargement.
+#
+# Ce fichier est intégré à INIMaster.exe. Un fichier du même nom placé dans
+# %LOCALAPPDATA%\INIMaster\lang ou à côté de l'exe le remplace.
+
+ (bundled with INI Master)	 (fourni avec INI Master)
+(empty)	(vide)
+(not in the file yet)	(pas encore dans le fichier)
+, then 	, puis 
+1 change	1 modification
+1 other ini file	1 autre fichier ini
+1 plugin	1 plugin
+1 unsaved change	1 modification non enregistrée
+@ directives in the ini	les directives @ de l'ini
+About this mod	À propos de ce mod
+Adding help for INI Master	Ajouter de l'aide pour INI Master
+All files	Tous les fichiers
+Any other value. The list covers the ones the comments name.	Toute autre valeur. La liste reprend celles que citent les commentaires.
+Back to the default: {0}	Revenir à la valeur par défaut : {0}
+Checked every two seconds. Saving works either way; a running game only notices if the plugin rereads its ini.	Vérifié toutes les deux secondes. L'enregistrement fonctionne dans tous les cas. Un jeu en cours ne voit la modification que si le plugin relit son ini.
+Choose the Crimson Desert folder	Choisir le dossier de Crimson Desert
+Choose the Crimson Desert folder, the one with bin64 in it	Choisissez le dossier de Crimson Desert, celui qui contient bin64
+Click, then press the key you want. Tab moves on.	Cliquez, puis appuyez sur la touche voulue. Tab passe au champ suivant.
+Could not create {0}: {1}	Impossible de créer {0} : {1}
+Could not find Crimson Desert. Use the Game folder button to pick it.	Crimson Desert est introuvable. Choisissez son dossier avec le bouton Dossier du jeu.
+Could not open the language folder: {0}	Impossible d'ouvrir le dossier des langues : {0}
+Could not read the plugin folder: {0}	Impossible de lire le dossier des plugins : {0}
+Could not read {0}: {1}	Impossible de lire {0} : {1}
+Could not read: {0}	Illisible : {0}
+Could not save {0}: {1}	Impossible d'enregistrer {0} : {1}
+Could not write the template: {0}	Impossible d'écrire le modèle : {0}
+Create it	Le créer
+Created {0} from the defaults the plugin describes.	{0} a été créé à partir des valeurs par défaut décrites par le plugin.
+Crimson Desert started. Changes still save straight to the ini files.	Crimson Desert a démarré. Les modifications sont toujours enregistrées directement dans les fichiers ini.
+Crimson Desert was not found. Choose its folder.	Crimson Desert est introuvable. Choisissez son dossier.
+Default: {0}	Par défaut : {0}
+Described by: {0}	Source : {0}
+Discard text edits	Annuler les modifications du texte
+Edit every value as the text in the file, for when a control guessed wrong.	Modifier chaque valeur comme le texte du fichier, au cas où un contrôle se serait trompé.
+Embedded help	Aide intégrée
+Export metadata template...	Exporter un modèle de métadonnées...
+File text	Texte du fichier
+Find a mod	Chercher un mod
+Find a setting (Ctrl+F)	Chercher un réglage (Ctrl+F)
+Found {0} and {1} in {2}.	{0} et {1} trouvés dans {2}.
+Game folder	Dossier du jeu
+Game not running	Jeu arrêté
+Game running	Jeu en cours
+Help from {0}.	Aide : {0}.
+How mod makers add help	Comment les moddeurs ajoutent de l'aide
+INI Master metadata	Métadonnées INI Master
+INI Master reads help for a setting from three places, and later ones win:\n\n1. The ini's own comments. The comment lines directly above a key are its help. Lines like ";   0  off" and ";   1  on" become choices, and "; ---- name" starts a group. A comment line that starts with ;@ sets things exactly, for example:\n   ;@ type=int min=0 max=100 unit=% label="Use cost"\n\n2. A file named after the ini with the .inimeta extension, next to it. It holds JSON, or an annotated copy of the default ini.\n\n3. The plugin itself. Add the same .inimeta file to the plugin's .rc file:\n   INIMETA INIMETA "MyMod.inimeta"\n\nAny text in the metadata can come in several languages. More > Export metadata template writes a starting .inimeta for the selected ini.	INI Master lit l'aide d'un réglage à trois endroits, et les derniers l'emportent :\n\n1. Les commentaires de l'ini. Les lignes de commentaire juste au-dessus d'une clé forment son aide. Des lignes comme ";   0  off" et ";   1  on" deviennent des choix, et "; ---- nom" commence un groupe. Une ligne de commentaire qui commence par ;@ fixe les choses précisément, par exemple :\n   ;@ type=int min=0 max=100 unit=% label="Use cost"\n\n2. Un fichier portant le nom de l'ini avec l'extension .inimeta, placé à côté. Il contient du JSON, ou une copie annotée de l'ini par défaut.\n\n3. Le plugin lui-même. Ajoutez le même fichier .inimeta au fichier .rc du plugin :\n   INIMETA INIMETA "MyMod.inimeta"\n\nTout texte des métadonnées peut exister en plusieurs langues. Plus > Exporter un modèle de métadonnées écrit un premier .inimeta pour l'ini sélectionné.
+Language	Langue
+Language: {0}.	Langue : {0}.
+Language: {0}. {1} lines of the translation were skipped because their placeholders did not match the English.	Langue : {0}. {1} lignes de la traduction ont été ignorées, car leurs marqueurs ne correspondaient pas à l'anglais.
+Loader, upscaler and overlay settings such as winmm.ini or OptiScaler.ini.	Réglages de loaders, d'upscalers et d'overlays comme winmm.ini ou OptiScaler.ini.
+Mod page	Page du mod
+Mods	Mods
+More	Plus
+Needs a number.	Un nombre est attendu.
+Needs a whole number.	Un nombre entier est attendu.
+Next launch	Prochain lancement
+No key	Aucune touche
+No mod selected	Aucun mod sélectionné
+No plugin with this name. The ini may belong to a DLL mod or an overlay.	Aucun plugin de ce nom. L'ini appartient peut-être à un mod DLL ou à un overlay.
+No translation for {0} yet, so the app stays in English. Mod help still follows the language where the mod has it.	Pas encore de traduction pour {0}, l'application reste donc en anglais. L'aide des mods suit tout de même la langue quand le mod la fournit.
+Nobody wrote help for this one yet.	Personne n'a encore écrit d'aide pour ce réglage.
+Not one of the listed choices.	Ce n'est pas l'un des choix proposés.
+Not saved. {0}: {1}	Non enregistré. {0} : {1}
+Nothing to save. The text matches the file.	Rien à enregistrer. Le texte correspond au fichier.
+Off	Désactivé
+On	Activé
+Open backups of this ini	Ouvrir les sauvegardes de cet ini
+Open the plugin folder	Ouvrir le dossier du plugin
+Open this ini in the default editor	Ouvrir cet ini dans l'éditeur par défaut
+Other values are allowed too.	D'autres valeurs sont aussi acceptées.
+Pick a plugin on the left. If the list is empty, point INI Master at the Crimson Desert folder with the Game folder button.	Choisissez un plugin à gauche. Si la liste est vide, indiquez à INI Master le dossier de Crimson Desert avec le bouton Dossier du jeu.
+Plain text values	Valeurs en texte brut
+Plugin: {0}	Plugin : {0}
+Press a key...	Appuyez sur une touche...
+Range: {0} to {1}	Plage : {0} à {1}
+Range: {0} to {1}, read from the comments and not enforced	Plage : {0} à {1}, lue dans les commentaires et non imposée
+Rescan plugins	Relire les plugins
+Same as Windows: {0}	Comme Windows : {0}
+Save	Enregistrer
+Save a metadata template for this ini	Enregistrer un modèle de métadonnées pour cet ini
+Save all files	Enregistrer tous les fichiers
+Save as I edit	Enregistrer en modifiant
+Save text	Enregistrer le texte
+Save this ini (Ctrl+S). Ctrl+Shift+S saves every file with changes.	Enregistrer cet ini (Ctrl+S). Ctrl+Maj+S enregistre tous les fichiers modifiés.
+Saved {0} as text.	{0} enregistré en texte.
+Saved {0} to {1} at {2}.	{0} enregistrée(s) dans {1} à {2}.
+Settings	Réglages
+Settings the mod maker marked as advanced.	Réglages que l'auteur du mod a marqués comme avancés.
+Show advanced	Afficher les avancés
+Show ini files without a plugin	Afficher les fichiers ini sans plugin
+Skipped {0}: {1}	{0} ignoré : {1}
+Some changes were not saved ({0}).\n\n{1}\n\nFix them, or choose No next time to discard them.	Certaines modifications n'ont pas été enregistrées ({0}).\n\n{1}\n\nCorrigez-les, ou choisissez Non la prochaine fois pour les abandonner.
+Something went wrong:\n\n{0}	Un problème est survenu :\n\n{0}
+Stored as a hex virtual-key code.	Enregistré comme code de touche virtuelle en hexadécimal.
+Stored as a key name. Ctrl, Shift and Alt combine with +.	Enregistré comme nom de touche. Ctrl, Shift et Alt se combinent avec +.
+Stored as a virtual-key code.	Enregistré comme code de touche virtuelle.
+Takes effect the next time the game starts.	Prend effet au prochain lancement du jeu.
+The comments mention {0} to {1}.	Les commentaires indiquent {0} à {1}.
+The file does not have this key. Changing it adds the key.	Le fichier ne contient pas cette clé. La modifier l'ajoute.
+The file exactly as it is on disk. Edits here are saved as typed, comments and all.	Le fichier tel qu'il est sur le disque. Les modifications faites ici sont enregistrées telles quelles, commentaires compris.
+The game is running and this plugin rereads its ini, so saved changes apply in game within a moment.	Le jeu tourne et ce plugin relit son ini, les modifications enregistrées s'appliquent donc en jeu en quelques instants.
+The game is running, but this plugin reads its ini only at startup. Changes save now and apply the next time the game starts.	Le jeu tourne, mais ce plugin ne lit son ini qu'au démarrage. Les modifications sont enregistrées maintenant et s'appliquent au prochain lancement.
+The game is running. INI Master saves straight to the file; whether the game notices before a restart depends on the plugin, and this one does not say.	Le jeu tourne. INI Master enregistre directement dans le fichier. Que le jeu le voie avant un redémarrage dépend du plugin, et celui-ci ne le précise pas.
+The game is running. If the plugin only reads its ini at startup, the change applies next launch.	Le jeu tourne. Si le plugin ne lit son ini qu'au démarrage, la modification s'appliquera au prochain lancement.
+The highest allowed is {0}.	La valeur maximale autorisée est {0}.
+The lowest allowed is {0}.	La valeur minimale autorisée est {0}.
+The mod maker added help for INI Master.	L'auteur du mod a ajouté de l'aide pour INI Master.
+The plugin rereads it while the game runs.	Le plugin le relit pendant que le jeu tourne.
+The plugin rereads this while the game runs.	Le plugin relit ce réglage pendant que le jeu tourne.
+There are unsaved changes ({0}). Save them first?	Il reste des modifications non enregistrées ({0}). Les enregistrer d'abord ?
+This plugin reads its ini at startup, so restart the game to apply it.	Ce plugin lit son ini au démarrage. Relancez le jeu pour l'appliquer.
+This plugin reads the setting at startup. Saving works now; restart the game to see it.	Ce plugin lit ce réglage au démarrage. L'enregistrement se fait tout de suite, relancez le jeu pour le voir.
+Translate INI Master...	Traduire INI Master...
+Type: {0}	Type : {0}
+Type: {0}, guessed from the value and comments	Type : {0}, deviné d'après la valeur et les commentaires
+Undo this change (back to the value in the file)	Annuler cette modification (retour à la valeur du fichier)
+Undo unsaved changes in this file	Annuler les modifications non enregistrées de ce fichier
+Unsaved changes	Modifications non enregistrées
+Windows refused to write {0}. If the game is under Program Files, run INI Master as administrator, or clear the file's read-only flag.	Windows a refusé d'écrire {0}. Si le jeu est dans Program Files, lancez INI Master en administrateur ou retirez l'attribut lecture seule du fichier.
+Write each change to the ini a moment after you make it, so a plugin that rereads its ini picks it up while you play.	Écrire chaque modification dans l'ini juste après l'avoir faite, pour qu'un plugin qui relit son ini la prenne en compte pendant que vous jouez.
+Writes {0} for on and {1} for off.	Écrit {0} pour activé et {1} pour désactivé.
+Wrote {0}. Edit it, then ship it next to the ini or embed it in the plugin.	{0} a été écrit. Modifiez-le, puis livrez-le à côté de l'ini ou intégrez-le au plugin.
+an .inimeta file	un fichier .inimeta
+any	libre
+by {0}	par {0}
+choice	choix
+embedded marker	marqueur intégré
+key	touche
+no ini	pas d'ini
+not in file	absent du fichier
+nothing, the type is a guess	aucune, le type est deviné
+number	nombre
+on or off	activé ou désactivé
+resource {0}	ressource {0}
+text	texte
+the ini's comments	les commentaires de l'ini
+the ini's own comments	les commentaires de l'ini
+the plugin's embedded metadata	les métadonnées intégrées au plugin
+whole number	nombre entier
+{0} (missing)	{0} (absent)
+{0} changed on disk and was reloaded.	{0} a changé sur le disque et a été rechargé.
+{0} changes	{0} modifications
+{0} does not exist yet. Most plugins write their ini the first time the game runs with them.	{0} n'existe pas encore. La plupart des plugins écrivent leur ini au premier lancement du jeu avec eux.
+{0} does not exist yet. The plugin may write it on its first run, or you can create it now from the defaults it describes.	{0} n'existe pas encore. Le plugin l'écrira peut-être à son premier lancement, ou vous pouvez le créer maintenant à partir des valeurs par défaut qu'il décrit.
+{0} is not in that folder or in a bin64 folder inside it.	{0} ne se trouve ni dans ce dossier ni dans un dossier bin64 à l'intérieur.
+{0} is saved as {1}, which has no "{2}".	{0} est enregistré en {1}, qui ne connaît pas "{2}".
+{0} is saved as {1}, which has no "{2}". Use other characters, or convert the file to UTF-8 in a text editor.	{0} est enregistré en {1}, qui ne connaît pas "{2}". Utilisez d'autres caractères, ou convertissez le fichier en UTF-8 dans un éditeur de texte.
+{0} other ini files	{0} autres fichiers ini
+{0} plugins	{0} plugins
+{0} unsaved changes	{0} modifications non enregistrées
+{0}, no plugin	{0}, sans plugin
