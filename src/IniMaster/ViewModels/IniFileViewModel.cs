@@ -294,6 +294,20 @@ public sealed class IniFileViewModel : ObservableObject
             var sectionMatches = filter.Length > 0 && section.Title.Contains(filter, StringComparison.OrdinalIgnoreCase);
             if (sectionMatches)
                 foreach (var s in section.Items.OfType<SettingViewModel>()) { s.IsVisible = !s.R.Hidden; any = true; }
+            // A group heading shows only while something under it does.
+            GroupViewModel? group = null;
+            var groupHasVisible = false;
+            foreach (var item in section.Items)
+            {
+                if (item is GroupViewModel g)
+                {
+                    if (group != null) group.IsVisible = groupHasVisible;
+                    group = g;
+                    groupHasVisible = false;
+                }
+                else if (item is SettingViewModel { IsVisible: true }) groupHasVisible = true;
+            }
+            if (group != null) group.IsVisible = groupHasVisible;
             section.IsVisible = !section.Hidden && (_main.ShowAdvanced || !section.Advanced) &&
                                 (any || (filter.Length == 0 && (section.Items.Count > 0 || section.Description != null)));
         }

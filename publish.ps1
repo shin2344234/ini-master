@@ -1,5 +1,8 @@
 # Builds dist\INIMaster.exe (single file, self-contained, win-x64) and a zip
-# with the docs and the SDK beside it.
+# with the docs and the SDK beside it. The exe is signed with
+# scripts\sign.ps1 before it is copied anywhere; -NoSign skips that for a
+# local build on a machine without the signing setup.
+param([switch] $NoSign)
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 $dist = Join-Path $root 'dist'
@@ -13,6 +16,8 @@ dotnet publish (Join-Path $root 'src\IniMaster\IniMaster.csproj') -nologo -c Rel
     -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true `
     -o $out
 if ($LASTEXITCODE) { throw 'publish failed' }
+
+if (-not $NoSign) { & (Join-Path $root 'scripts\sign.ps1') -Path (Join-Path $out 'INIMaster.exe') }
 
 [xml]$proj = Get-Content (Join-Path $root 'src\IniMaster\IniMaster.csproj')
 $version = ($proj.Project.PropertyGroup | Where-Object Version | Select-Object -First 1).Version

@@ -4,3 +4,4 @@ dist/
 sdk/example/build/
 *.user
 .vs/
+private/
