@@ -45,16 +45,16 @@ public sealed class ResolvedSetting
             case SettingTypes.Int:
             case SettingTypes.Float:
             {
-                if (value.Trim().Length == 0) return "Needs a number.";
+                if (value.Trim().Length == 0) return Loc.T("Needs a number.");
                 if (!TryNumber(value, Type == SettingTypes.Int, out var d))
-                    return Type == SettingTypes.Int ? "Needs a whole number." : "Needs a number.";
-                if (!RangeGuessed && Min is { } lo && d < lo) return $"The lowest allowed is {Fmt(lo)}.";
-                if (!RangeGuessed && Max is { } hi && d > hi) return $"The highest allowed is {Fmt(hi)}.";
+                    return Type == SettingTypes.Int ? Loc.T("Needs a whole number.") : Loc.T("Needs a number.");
+                if (!RangeGuessed && Min is { } lo && d < lo) return Loc.T("The lowest allowed is {0}.", Fmt(lo));
+                if (!RangeGuessed && Max is { } hi && d > hi) return Loc.T("The highest allowed is {0}.", Fmt(hi));
                 return null;
             }
             case SettingTypes.Enum:
                 if (!AllowCustom && Options.Count > 0 && !Options.Any(o => string.Equals(o.Value, value, StringComparison.OrdinalIgnoreCase)))
-                    return "Not one of the listed choices.";
+                    return Loc.T("Not one of the listed choices.");
                 return null;
             default:
                 return null;
@@ -66,7 +66,7 @@ public sealed class ResolvedSetting
     {
         if (!RangeGuessed || !TryNumber(value, false, out var d)) return null;
         if (Min is { } lo && d < lo || Max is { } hi && d > hi)
-            return $"The comments mention {Fmt(Min ?? 0)} to {Fmt(Max ?? 0)}.";
+            return Loc.T("The comments mention {0} to {1}.", Fmt(Min ?? 0), Fmt(Max ?? 0));
         return null;
     }
 
@@ -126,7 +126,7 @@ public static partial class SettingResolver
 
         if (type == SettingTypes.Key && keyFormat == null)
             keyFormat = value.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? "hex"
-                : int.TryParse(value, out _) ? "vk" : "name";
+                : int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out _) ? "vk" : "name";
 
         return new ResolvedSetting
         {
@@ -186,7 +186,7 @@ public static partial class SettingResolver
 
         if (KeyishName().IsMatch(key) && !key.StartsWith("Keep", StringComparison.OrdinalIgnoreCase))
         {
-            if (int.TryParse(lower, out var vk) && vk is > 0 and < 256) { keyFormat ??= "vk"; return SettingTypes.Key; }
+            if (int.TryParse(lower, NumberStyles.Integer, CultureInfo.InvariantCulture, out var vk) && vk is > 0 and < 256) { keyFormat ??= "vk"; return SettingTypes.Key; }
             if (lower.StartsWith("0x") && KeyNames.TryParseVk(probe, out _)) { keyFormat ??= "hex"; return SettingTypes.Key; }
             if (KeyNames.LooksLikeKeyName(probe)) { keyFormat ??= "name"; return SettingTypes.Key; }
         }
@@ -246,7 +246,8 @@ public static partial class SettingResolver
         return string.Join(' ', words);
     }
 
-    [GeneratedRegex(@"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])")]
+    // Letters in any script, so ВидимостьМеню splits like MenuVisibility.
+    [GeneratedRegex(@"(?<=[\p{Ll}\p{Nd}])(?=\p{Lu})|(?<=\p{Lu})(?=\p{Lu}\p{Ll})")]
     private static partial Regex SplitWords();
 
     [GeneratedRegex(@"^(Enable|Enabled|Disable|Disabled|Show|Hide|Hook|Notify|Debug|Log|Use|Allow|Skip|Is|Has|Keep|Auto|Stop|Draw|Break|Take|Pick|Gather|Loot|Catch|Search|Wrap|No|Force|Toggle|Lock|Unlock|Always|Never|Can|Should|Ignore|Block|Remember|Probe|Rumble|Mute|Pause|Invert)([A-Z0-9_]|$)|(Enabled|Disabled|Enable|Disable|Log|Logging|Debug|Hud|Overlay)$", RegexOptions.None)]

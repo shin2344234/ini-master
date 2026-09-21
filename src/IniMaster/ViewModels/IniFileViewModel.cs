@@ -75,17 +75,30 @@ public sealed class IniFileViewModel : ObservableObject
     public bool HasErrors => AllSettings.Any(s => s.HasError && _pending.ContainsKey((s.Section, s.Key)));
     public bool CanCreate => !Exists && (Meta.DefaultIniText != null || Meta.Sections.Values.Any(s => s.Keys.Count > 0));
     public string MissingText => Meta.DefaultIniText != null || Meta.Sections.Values.Any(s => s.Keys.Count > 0)
-        ? $"{FileName} does not exist yet. The plugin may write it on its first run, or you can create it now from the defaults it describes."
-        : $"{FileName} does not exist yet. Most plugins write their ini the first time the game runs with them.";
+        ? Loc.T("{0} does not exist yet. The plugin may write it on its first run, or you can create it now from the defaults it describes.", FileName)
+        : Loc.T("{0} does not exist yet. Most plugins write their ini the first time the game runs with them.", FileName);
+
+    /// Why the file cannot hold the value as it is encoded now, if it cannot.
+    public string? EncodingProblem(string value) =>
+        _doc != null && TextCodec.FirstUnencodable(value, _doc.Encoding) is { } ch
+            ? Loc.T("{0} is saved as {1}, which has no \"{2}\".", FileName, _doc.Encoding.WebName, ch)
+            : null;
+
+    /// After a language change: every computed text on this file.
+    public void RefreshText()
+    {
+        Raise(string.Empty);
+        foreach (var s in AllSettings) s.RefreshText();
+    }
 
     public IEnumerable<SettingViewModel> AllSettings => Sections.SelectMany(s => s.Items.OfType<SettingViewModel>());
 
     public bool HasPending(SettingViewModel s) => _pending.ContainsKey((s.Section, s.Key));
 
-    public void UpdateTarget(IniTarget target)
+    public void UpdateTarget(IniTarget target, bool load)
     {
         Target = target;
-        Load();
+        if (load) Load();
     }
 
     // ------------------------------------------------------------ load
@@ -95,7 +108,7 @@ public sealed class IniFileViewModel : ObservableObject
         LoadError = null;
         byte[]? bytes = null;
         try { bytes = IniStore.ReadBytes(Path); }
-        catch (Exception ex) { LoadError = $"Could not read {FileName}: {ex.Message}"; }
+        catch (Exception ex) { LoadError = Loc.T("Could not read {0}: {1}", FileName, ex.Message); }
         _doc = bytes == null ? null : IniDocument.Load(bytes);
         _lastHash = bytes == null ? null : IniStore.Hash(bytes);
         _structure = Structure(_doc);
@@ -175,7 +188,7 @@ public sealed class IniFileViewModel : ObservableObject
             Raise(nameof(Exists), nameof(Meta), nameof(ModLive), nameof(CanCreate), nameof(MissingText));
         }
         if (!_rawDirty) { _rawText = null; Raise(nameof(RawText)); }
-        _main.Status = $"{FileName} changed on disk and was reloaded.";
+        _main.Status = Loc.T("{0} changed on disk and was reloaded.", FileName);
     }
 
     // ------------------------------------------------------------ edit and save
@@ -208,7 +221,7 @@ public sealed class IniFileViewModel : ObservableObject
                             .ToDictionary(p => p.Key, p => p.Value);
         if (edits.Count == 0)
         {
-            if (invalid.Count > 0) _main.Status = $"Not saved: {invalid[0].Label}: {invalid[0].Error}";
+            if (invalid.Count > 0) _main.Status = Loc.T("Not saved. {0}: {1}", invalid[0].Label, invalid[0].Error);
             return invalid.Count == 0;
         }
         try
@@ -231,29 +244,28 @@ public sealed class IniFileViewModel : ObservableObject
         }
         catch (UnauthorizedAccessException)
         {
-            _main.Status = $"Windows refused to write {FileName}. If the game is under Program Files, run INI Master as administrator, or clear the file's read-only flag.";
+            _main.Status = Loc.T("Windows refused to write {0}. If the game is under Program Files, run INI Master as administrator, or clear the file's read-only flag.", FileName);
         }
         catch (Exception ex)
         {
-            _main.Status = $"Could not save {FileName}: {ex.Message}";
+            _main.Status = Loc.T("Could not save {0}: {1}", FileName, ex.Message);
         }
         return false;
     }
 
     private string SavedMessage(int count, List<SettingViewModel> invalid)
     {
-        var what = count == 1 ? "1 change" : $"{count} changes";
-        var msg = $"Saved {what} to {FileName} at {DateTime.Now:HH:mm:ss}.";
+        var msg = Loc.T("Saved {0} to {1} at {2}.", Loc.Plural(count, "1 change", "{0} changes"), FileName, DateTime.Now.ToString("HH:mm:ss"));
         if (_main.GameRunning)
         {
             msg += ModLive switch
             {
-                true => " The plugin rereads it while the game runs.",
-                false => " This plugin reads its ini at startup, so restart the game to apply it.",
-                _ => " The game is running; if the plugin only reads its ini at startup, the change applies next launch.",
+                true => " " + Loc.T("The plugin rereads it while the game runs."),
+                false => " " + Loc.T("This plugin reads its ini at startup, so restart the game to apply it."),
+                _ => " " + Loc.T("The game is running. If the plugin only reads its ini at startup, the change applies next launch."),
             };
         }
-        if (invalid.Count > 0) msg += $" Skipped {invalid[0].Label}: {invalid[0].Error}";
+        if (invalid.Count > 0) msg += " " + Loc.T("Skipped {0}: {1}", invalid[0].Label, invalid[0].Error);
         return msg;
     }
 
@@ -362,10 +374,10 @@ public sealed class IniFileViewModel : ObservableObject
             Load();
             Raise(nameof(RawDirty));
             _main.OnFileStateChanged();
-            _main.Status = result.Changed ? $"Saved {FileName} as text." : "Nothing to save; the text matches the file.";
+            _main.Status = result.Changed ? Loc.T("Saved {0} as text.", FileName) : Loc.T("Nothing to save. The text matches the file.");
             return true;
         }
-        catch (Exception ex) { _main.Status = $"Could not save {FileName}: {ex.Message}"; }
+        catch (Exception ex) { _main.Status = Loc.T("Could not save {0}: {1}", FileName, ex.Message); }
         return false;
     }
 
@@ -402,9 +414,9 @@ public sealed class IniFileViewModel : ObservableObject
             }
             IniStore.WriteAtomic(Path, TextCodec.Encode(text.Replace("\r\n", "\n").Replace("\n", "\r\n"), new UTF8Encoding(false)));
             Load();
-            _main.Status = $"Created {FileName} from the defaults the plugin describes.";
+            _main.Status = Loc.T("Created {0} from the defaults the plugin describes.", FileName);
         }
-        catch (Exception ex) { _main.Status = $"Could not create {FileName}: {ex.Message}"; }
+        catch (Exception ex) { _main.Status = Loc.T("Could not create {0}: {1}", FileName, ex.Message); }
     }
 
     private sealed class KeyComparer : IEqualityComparer<(string, string)>

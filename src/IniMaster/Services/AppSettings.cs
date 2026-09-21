@@ -17,6 +17,8 @@ public sealed class AppSettings
     public double Height { get; set; } = 820;
     public double ListWidth { get; set; } = 280;
     public bool Maximized { get; set; }
+    /// A language tag such as "de", or null to follow Windows.
+    public string? Language { get; set; }
 
     private static string FilePath => Path.Combine(IniStore.AppDataFolder, "settings.json");
 

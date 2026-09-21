@@ -422,7 +422,7 @@ public static partial class CommentAnalyzer
             var val = m.Groups["q"].Success ? m.Groups["q"].Value : m.Groups["v"].Value.Trim();
             pairs.Add(new(m.Groups["k"].Value.ToLowerInvariant(), val.Replace("\\n", "\n")));
         }
-        return (words, pairs);
+        return (words, Loc.PickPairs(pairs));
     }
 
     private static void ApplyFloatingDirective(IniAnalysis a, string section, string body)
@@ -595,6 +595,7 @@ public static partial class CommentAnalyzer
     [GeneratedRegex(@"(?<![\w.\-])(?<v>-?\d+)\s+(?<l>[A-Za-z][A-Za-z ]*?)\s*(?=,|\(|$|\.)")]
     private static partial Regex SectionPair();
 
-    [GeneratedRegex(@"(?<![\w])(?<k>[A-Za-z_]\w*)\s*=\s*(?:""(?<q>[^""]*)""|(?<v>.*?))(?=\s+[A-Za-z_]\w*\s*=|\s*$)")]
+    // A name may end in a language tag, as in label.de="Kosten".
+    [GeneratedRegex(@"(?<![\w.])(?<k>[A-Za-z_]\w*(?:\.[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{2,8})?)?)\s*=\s*(?:""(?<q>[^""]*)""|(?<v>.*?))(?=\s+[A-Za-z_]\w*(?:\.[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{2,8})?)?\s*=|\s*$)")]
     private static partial Regex DirectivePair();
 }

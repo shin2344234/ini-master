@@ -297,8 +297,33 @@ public static class TextCodec
         catch (DecoderFallbackException)
         {
             encoding = Encoding.GetEncoding(0);
+            // With Windows set to use UTF-8 as its ANSI code page, a file that
+            // is not valid UTF-8 would decode to replacement characters and
+            // lose its bytes on save. Latin-1 maps every byte to a character
+            // and back, so the lines nobody edits come back unchanged.
+            if (encoding.CodePage == 65001) encoding = Encoding.Latin1;
             return encoding.GetString(bytes);
         }
+    }
+
+    /// False if the encoding cannot hold every character of the text, which
+    /// would be saved as '?'. Unicode encodings hold everything.
+    public static bool CanEncode(string text, Encoding encoding)
+    {
+        if (encoding is UTF8Encoding or UnicodeEncoding or UTF32Encoding) return true;
+        var strict = Encoding.GetEncoding(encoding.CodePage, EncoderFallback.ExceptionFallback, DecoderFallback.ReplacementFallback);
+        try { strict.GetByteCount(text); return true; }
+        catch (EncoderFallbackException) { return false; }
+    }
+
+    /// The first character of the text the encoding cannot hold, if any.
+    public static string? FirstUnencodable(string text, Encoding encoding)
+    {
+        if (CanEncode(text, encoding)) return null;
+        var e = System.Globalization.StringInfo.GetTextElementEnumerator(text);
+        while (e.MoveNext())
+            if (!CanEncode(e.GetTextElement(), encoding)) return e.GetTextElement();
+        return null;
     }
 
     public static byte[] Encode(string text, Encoding encoding)

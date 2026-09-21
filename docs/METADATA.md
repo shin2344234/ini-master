@@ -170,3 +170,29 @@ if (watch.Changed()) ReadSettings();
 ```
 
 Then set `"live": true`, and players see that their changes apply at once. Mark anything read only at startup, such as hooks installed once, with `"live": false`.
+
+## 6. Help in more than one language
+
+Every piece of text in the metadata can come in several languages, and INI Master shows the one that matches its own language setting (More, Language), which follows Windows unless the player picks another. It looks for the exact language (`pt-br`), then the base language (`pt`), then untagged text, then English, then whatever is there.
+
+In JSON, give any text field an object keyed by language tag instead of a string. That covers `name`, `description`, section `label` and `description`, and a key's `label`, `help`, `tooltip`, `unit` and `group`. The values can still be arrays of lines:
+
+```jsonc
+"Speed": {
+  "label": { "en": "Travel speed", "de": "Reisetempo", "pt-br": "Velocidade" },
+  "help":  { "en": ["How fast you move.", "Above 2 the camera struggles."],
+             "de": ["Wie schnell du dich bewegst.", "Über 2 kommt die Kamera nicht mit."] },
+  "options": { "0": { "en": "Off", "de": "Aus" }, "1": "On" }
+}
+```
+
+The bare-string shorthand for help (`"Notes": "..."`) stays a single language. Use `{ "help": { ... } }` to translate it.
+
+In a `;@` line, add the tag to the name. The untagged value is the fallback for every language without its own:
+
+```ini
+;@ type=int min=0 max=100 label="Use cost" label.de="Nutzungskosten" help.de="Kosten pro Aktion."
+UsePercent=0
+```
+
+Plain comments have one language, whichever you wrote them in. A mod that ships its comments in English and a translated `.inimeta` shows the `.inimeta` text to players who read that language and the comments to everyone else.

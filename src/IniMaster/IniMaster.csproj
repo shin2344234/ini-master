@@ -8,7 +8,7 @@
     <Nullable>enable</Nullable>
     <RootNamespace>IniMaster</RootNamespace>
     <AssemblyName>INIMaster</AssemblyName>
-    <Version>1.0.1</Version>
+    <Version>1.1.0</Version>
     <Product>INI Master</Product>
     <Description>Edit Crimson Desert plugin ini files, including while the game runs.</Description>
     <ApplicationManifest>app.manifest</ApplicationManifest>
@@ -23,6 +23,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\IniMaster.Core\IniMaster.Core.csproj" />
+  </ItemGroup>
+
+  <!-- More > Translate INI Master copies this out for translators. -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\lang\INIMaster.template.txt" LogicalName="INIMaster.template.txt" />
   </ItemGroup>
 
   <ItemGroup>

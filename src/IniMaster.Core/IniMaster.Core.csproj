@@ -6,4 +6,8 @@
     <RootNamespace>IniMaster.Core</RootNamespace>
     <NoWarn>$(NoWarn);CS1591;CS1587</NoWarn>
   </PropertyGroup>
+  <!-- Finished translations ship inside the exe; see Loc.Embedded. -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\lang\INIMaster.*.txt" Exclude="..\..\lang\INIMaster.template.txt" LogicalName="lang.%(Filename)%(Extension)" />
+  </ItemGroup>
 </Project>

@@ -35,14 +35,14 @@ public static class AsiMetaReader
         try
         {
             foreach (var (name, data) in ReadResources(bytes, ResourceType))
-                found.Add(new Found(DecodeText(data), $"resource {ResourceType}/{name}"));
+                found.Add(new Found(DecodeText(data), Loc.T("resource {0}", $"{ResourceType}/{name}")));
         }
         catch (Exception)
         {
             // A malformed resource table is not our problem to report; the
             // marker scan below still runs.
         }
-        foreach (var text in ScanMarkers(bytes)) found.Add(new Found(text, "embedded marker"));
+        foreach (var text in ScanMarkers(bytes)) found.Add(new Found(text, Loc.T("embedded marker")));
         return found;
     }
 

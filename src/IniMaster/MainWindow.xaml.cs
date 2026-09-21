@@ -6,6 +6,8 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Navigation;
 using System.Runtime.InteropServices;
+using IniMaster.Core;
+using IniMaster.Localization;
 using IniMaster.Services;
 using IniMaster.ViewModels;
 
@@ -22,6 +24,9 @@ public partial class MainWindow : Window
         InitializeComponent();
         _startPath = startPath;
         _settings = AppSettings.Load();
+        Languages.Apply(_settings.Language);
+        ApplyFlowDirection();
+        Loc.Changed += ApplyFlowDirection;
         _vm = new MainViewModel(_settings);
         DataContext = _vm;
 
@@ -37,6 +42,9 @@ public partial class MainWindow : Window
         InputBindings.Add(new KeyBinding(new RelayCommand(FocusFilter), Key.F, ModifierKeys.Control));
         Loaded += (_, _) => _vm.Start(_startPath);
     }
+
+    private void ApplyFlowDirection() =>
+        FlowDirection = Languages.IsRightToLeft ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
 
     [DllImport("dwmapi.dll")]
     private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int value, int size);
@@ -94,6 +102,7 @@ public partial class MainWindow : Window
             new[] { new System.Windows.Controls.Primitives.CustomPopupPlacement(new Point(target.Width - popup.Width, target.Height + 2),
                 System.Windows.Controls.Primitives.PopupPrimaryAxis.Horizontal) };
         menu.DataContext = _vm;
+        _vm.RefreshLanguageChoices();
         menu.IsOpen = true;
     }
 

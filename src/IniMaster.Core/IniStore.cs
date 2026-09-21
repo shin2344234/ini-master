@@ -44,7 +44,11 @@ public static class IniStore
     {
         var current = ReadBytes(path);
         var doc = current == null ? IniDocument.Parse("") : IniDocument.Load(current);
-        foreach (var ((section, key), value) in edits) doc.Set(section, key, value);
+        foreach (var ((section, key), value) in edits)
+        {
+            CheckEncodable(path, value, doc.Encoding);
+            doc.Set(section, key, value);
+        }
         var bytes = doc.ToBytes();
         if (current != null && bytes.AsSpan().SequenceEqual(current)) return new SaveResult(false, bytes, doc, null);
         string? backupPath = null;
@@ -57,6 +61,7 @@ public static class IniStore
     {
         var current = ReadBytes(path);
         var encoding = current != null ? IniDocument.Load(current).Encoding : new System.Text.UTF8Encoding(false);
+        CheckEncodable(path, text, encoding);
         var doc = IniDocument.Parse(text, encoding);
         var bytes = doc.ToBytes();
         if (current != null && bytes.AsSpan().SequenceEqual(current)) return new SaveResult(false, bytes, doc, null);
@@ -64,6 +69,15 @@ public static class IniStore
         if (backup && current != null) backupPath = Backup(path, current);
         WriteAtomic(path, bytes);
         return new SaveResult(true, bytes, doc, backupPath);
+    }
+
+    /// Refuses text the file's encoding would turn into '?', instead of
+    /// writing it damaged.
+    public static void CheckEncodable(string path, string text, System.Text.Encoding encoding)
+    {
+        if (TextCodec.FirstUnencodable(text, encoding) is { } ch)
+            throw new UnencodableTextException(Loc.T("{0} is saved as {1}, which has no \"{2}\". Use other characters, or convert the file to UTF-8 in a text editor.",
+                Path.GetFileName(path), encoding.WebName, ch));
     }
 
     /// Writes beside the target and renames over it, so a plugin that reads
@@ -132,3 +146,5 @@ public static class IniStore
         return path;
     }
 }
+
+public sealed class UnencodableTextException(string message) : IOException(message);

@@ -129,7 +129,7 @@ public sealed class SettingViewModel : ItemViewModel
         }
     }
 
-    public string BoolCaption => StateLabel ?? (IsChecked ? "On" : "Off");
+    public string BoolCaption => StateLabel ?? (IsChecked ? Loc.T("On") : Loc.T("Off"));
 
     // ------------------------------------------------------------ enum
 
@@ -173,7 +173,7 @@ public sealed class SettingViewModel : ItemViewModel
 
     // ------------------------------------------------------------ validation
 
-    public string? Error => R.Validate(_value);
+    public string? Error => R.Validate(_value) ?? (IsDirty ? _owner.EncodingProblem(_value) : null);
     public string? Warning => Error == null ? R.Warn(_value) : null;
     public bool HasError => Error != null;
     public bool HasWarning => Warning != null;
@@ -197,9 +197,11 @@ public sealed class SettingViewModel : ItemViewModel
 
     public bool? EffectiveLive => R.Live ?? _owner.ModLive;
 
-    public string? LiveBadge => _owner.GameRunning && EffectiveLive == false ? "Next launch" : null;
+    public string? LiveBadge => _owner.GameRunning && EffectiveLive == false ? Loc.T("Next launch") : null;
 
     public void RefreshGameState() => Raise(nameof(LiveBadge), nameof(Facts));
+
+    public void RefreshText() => Raise(string.Empty);
 
     /// Default, range, choices and where the information came from.
     public string Facts
@@ -208,55 +210,52 @@ public sealed class SettingViewModel : ItemViewModel
         {
             var sb = new StringBuilder();
             sb.Append('[').Append(R.Section).Append("] ").Append(R.Key);
-            if (!InFile) sb.Append("   (not in the file yet)");
+            if (!InFile) sb.Append("   ").Append(Loc.T("(not in the file yet)"));
             sb.AppendLine();
-            sb.Append("Type: ").Append(TypeName);
-            if (R.TypeGuessed) sb.Append(" (guessed from the value and comments)");
-            sb.AppendLine();
-            if (R.Default != null) sb.Append("Default: ").AppendLine(R.Default.Length == 0 ? "(empty)" : R.Default);
+            sb.AppendLine(R.TypeGuessed ? Loc.T("Type: {0}, guessed from the value and comments", TypeName) : Loc.T("Type: {0}", TypeName));
+            if (R.Default != null) sb.AppendLine(Loc.T("Default: {0}", R.Default.Length == 0 ? Loc.T("(empty)") : R.Default));
             if (R.Min != null || R.Max != null)
             {
-                sb.Append("Range: ").Append(R.Min is { } lo ? ResolvedSetting.Fmt(lo) : "any").Append(" to ")
-                  .Append(R.Max is { } hi ? ResolvedSetting.Fmt(hi) : "any");
-                if (R.RangeGuessed) sb.Append(" (read from the comments, not enforced)");
-                sb.AppendLine();
+                var lo = R.Min is { } a ? ResolvedSetting.Fmt(a) : Loc.T("any");
+                var hi = R.Max is { } b ? ResolvedSetting.Fmt(b) : Loc.T("any");
+                sb.AppendLine(R.RangeGuessed ? Loc.T("Range: {0} to {1}, read from the comments and not enforced", lo, hi) : Loc.T("Range: {0} to {1}", lo, hi));
             }
-            if (R.Type == SettingTypes.Bool) sb.Append("Writes ").Append(R.TrueValue).Append(" for on and ").Append(R.FalseValue).AppendLine(" for off.");
+            if (R.Type == SettingTypes.Bool) sb.AppendLine(Loc.T("Writes {0} for on and {1} for off.", R.TrueValue, R.FalseValue));
             if (R.Type == SettingTypes.Key)
                 sb.AppendLine(R.KeyFormat switch
                 {
-                    "vk" => "Stored as a virtual-key code.",
-                    "hex" => "Stored as a hex virtual-key code.",
-                    _ => "Stored as a key name. Ctrl, Shift and Alt combine with +.",
+                    "vk" => Loc.T("Stored as a virtual-key code."),
+                    "hex" => Loc.T("Stored as a hex virtual-key code."),
+                    _ => Loc.T("Stored as a key name. Ctrl, Shift and Alt combine with +."),
                 });
-            if (R.Options.Count > 0 && R.Type == SettingTypes.Enum && AllowCustom) sb.AppendLine("Other values are allowed too.");
+            if (R.Options.Count > 0 && R.Type == SettingTypes.Enum && AllowCustom) sb.AppendLine(Loc.T("Other values are allowed too."));
             switch (EffectiveLive)
             {
-                case true: sb.AppendLine("The plugin rereads this while the game runs."); break;
-                case false: sb.AppendLine("Takes effect the next time the game starts."); break;
+                case true: sb.AppendLine(Loc.T("The plugin rereads this while the game runs.")); break;
+                case false: sb.AppendLine(Loc.T("Takes effect the next time the game starts.")); break;
             }
-            sb.Append("Described by: ").Append(SourceName(R.Source));
+            sb.Append(Loc.T("Described by: {0}", SourceName(R.Source)));
             return sb.ToString();
         }
     }
 
     public string TypeName => R.Type switch
     {
-        SettingTypes.Bool => "on or off",
-        SettingTypes.Int => "whole number",
-        SettingTypes.Float => "number",
-        SettingTypes.Enum => "choice",
-        SettingTypes.Key => "key",
-        _ => "text",
+        SettingTypes.Bool => Loc.T("on or off"),
+        SettingTypes.Int => Loc.T("whole number"),
+        SettingTypes.Float => Loc.T("number"),
+        SettingTypes.Enum => Loc.T("choice"),
+        SettingTypes.Key => Loc.T("key"),
+        _ => Loc.T("text"),
     };
 
     public static string SourceName(MetaSource s) => s switch
     {
-        MetaSource.Embedded => "the plugin's embedded metadata",
-        MetaSource.Sidecar => "an .inimeta file",
-        MetaSource.IniDirectives => "@ directives in the ini",
-        MetaSource.IniComments => "the ini's comments",
-        _ => "nothing; the type is a guess",
+        MetaSource.Embedded => Loc.T("the plugin's embedded metadata"),
+        MetaSource.Sidecar => Loc.T("an .inimeta file"),
+        MetaSource.IniDirectives => Loc.T("@ directives in the ini"),
+        MetaSource.IniComments => Loc.T("the ini's comments"),
+        _ => Loc.T("nothing, the type is a guess"),
     };
 
     public string ToolTipText

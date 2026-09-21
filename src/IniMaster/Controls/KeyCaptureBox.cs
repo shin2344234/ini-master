@@ -25,14 +25,14 @@ public sealed class KeyCaptureBox : TextBox
         IsReadOnly = true;
         IsReadOnlyCaretVisible = false;
         Cursor = Cursors.Hand;
-        ToolTip = "Click, then press the key you want. Tab moves on.";
+        ToolTip = Loc.T("Click, then press the key you want. Tab moves on.");
         GotKeyboardFocus += (_, _) => ShowValue();
         LostKeyboardFocus += (_, _) => ShowValue();
     }
 
     private void ShowValue()
     {
-        if (IsKeyboardFocused) { Text = "Press a key..."; return; }
+        if (IsKeyboardFocused) { Text = Loc.T("Press a key..."); return; }
         var v = Value ?? "";
         var described = KeyNames.Describe(v, Format);
         Text = Format is "vk" or "hex" && described != v ? $"{described}   ({v})" : described;

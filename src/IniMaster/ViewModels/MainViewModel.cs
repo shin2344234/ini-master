@@ -7,6 +7,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Threading;
 using IniMaster.Core;
+using IniMaster.Localization;
 using IniMaster.Services;
 using Microsoft.Win32;
 
@@ -46,6 +47,7 @@ public sealed class MainViewModel : ObservableObject
         ExportMetaCommand = new RelayCommand(ExportMeta, () => CurrentFile != null);
         GuideCommand = new RelayCommand(OpenGuide);
         ClearFilterCommand = new RelayCommand(() => Filter = "");
+        OpenLanguageFolderCommand = new RelayCommand(OpenLanguageFolder);
     }
 
     public ObservableCollection<ModViewModel> Mods { get; } = new();
@@ -74,7 +76,7 @@ public sealed class MainViewModel : ObservableObject
 
     public bool HasGame => GameRoot != null;
     public string? BinFolder => GameRoot == null ? null : GameLocator.BinFolder(GameRoot);
-    public string GameRootText => GameRoot ?? "Crimson Desert was not found. Choose its folder.";
+    public string GameRootText => GameRoot ?? Loc.T("Crimson Desert was not found. Choose its folder.");
 
     public bool GameRunning
     {
@@ -84,11 +86,11 @@ public sealed class MainViewModel : ObservableObject
             if (!Set(ref _gameRunning, value)) return;
             Raise(nameof(GameStateText));
             foreach (var m in Mods) foreach (var f in m.Files) f.RefreshGameState();
-            if (value) Status = "Crimson Desert started. Changes still save straight to the ini files.";
+            if (value) Status = Loc.T("Crimson Desert started. Changes still save straight to the ini files.");
         }
     }
 
-    public string GameStateText => GameRunning ? "Game running" : "Game not running";
+    public string GameStateText => GameRunning ? Loc.T("Game running") : Loc.T("Game not running");
 
     public bool ApplyInstantly
     {
@@ -177,8 +179,58 @@ public sealed class MainViewModel : ObservableObject
         get
         {
             var n = Mods.SelectMany(m => m.Files).Sum(f => f.ChangeCount + (f.RawDirty ? 1 : 0));
-            return n == 0 ? "" : n == 1 ? "1 unsaved change" : $"{n} unsaved changes";
+            return n == 0 ? "" : Loc.Plural(n, "1 unsaved change", "{0} unsaved changes");
         }
+    }
+
+    // ------------------------------------------------------------ language
+
+    public sealed record LanguageChoice(string Tag, string Name, bool IsCurrent, RelayCommand Command);
+
+    /// "Same as Windows" first, then English and every translation found.
+    public IReadOnlyList<LanguageChoice> LanguageChoices
+    {
+        get
+        {
+            var current = _settings.Language;
+            var list = new List<LanguageChoice>
+            {
+                new("", Loc.T("Same as Windows: {0}", Loc.DisplayName(Languages.WindowsTag)), string.IsNullOrEmpty(current),
+                    new RelayCommand(() => SetLanguage(null))),
+            };
+            foreach (var tag in Loc.Available(Languages.Folders))
+                list.Add(new(tag, Loc.DisplayName(tag), string.Equals(current, tag, StringComparison.OrdinalIgnoreCase),
+                    new RelayCommand(() => SetLanguage(tag))));
+            return list;
+        }
+    }
+
+    public RelayCommand OpenLanguageFolderCommand { get; }
+
+    /// Picks up translation files added since the menu last opened.
+    public void RefreshLanguageChoices() => Raise(nameof(LanguageChoices));
+
+    /// Switches language in place. Metadata is read again, since a mod may
+    /// ship its help in more than one language; unsaved edits carry over.
+    public void SetLanguage(string? tag)
+    {
+        _settings.Language = string.IsNullOrWhiteSpace(tag) ? null : Loc.Normalize(tag);
+        foreach (var f in Mods.SelectMany(m => m.Files)) f.FlushPendingSave();
+        Languages.Apply(_settings.Language);
+        Rescan();
+        foreach (var m in Mods) m.RefreshText();
+        Raise(string.Empty);
+        Status = Loc.SourcePath == null && Loc.Language != "en"
+            ? Loc.T("No translation for {0} yet, so the app stays in English. Mod help still follows the language where the mod has it.", Loc.DisplayName(Loc.Language))
+            : Loc.IgnoredLines > 0
+                ? Loc.T("Language: {0}. {1} lines of the translation were skipped because their placeholders did not match the English.", Loc.DisplayName(Loc.Language), Loc.IgnoredLines)
+                : Loc.T("Language: {0}.", Loc.DisplayName(Loc.Language));
+    }
+
+    private void OpenLanguageFolder()
+    {
+        try { OpenShell(Languages.PrepareUserFolder()); }
+        catch (Exception ex) { Status = Loc.T("Could not open the language folder: {0}", ex.Message); }
     }
 
     // ------------------------------------------------------------ start up
@@ -190,7 +242,7 @@ public sealed class MainViewModel : ObservableObject
         _gameTimer.Start();
         if (root == null)
         {
-            Status = "Could not find Crimson Desert. Use Browse to pick the game folder.";
+            Status = Loc.T("Could not find Crimson Desert. Use the Game folder button to pick it.");
             return;
         }
         SetGameRoot(root);
@@ -215,7 +267,7 @@ public sealed class MainViewModel : ObservableObject
         try { infos = ModScanner.Scan(GameRoot, Directory.Exists(CommunityFolder) ? CommunityFolder : null); }
         catch (Exception ex)
         {
-            Status = "Could not read the plugin folder: " + ex.Message;
+            Status = Loc.T("Could not read the plugin folder: {0}", ex.Message);
             return;
         }
         var selectedId = SelectedMod?.Id;
@@ -238,7 +290,10 @@ public sealed class MainViewModel : ObservableObject
         if (selectedId != null && SelectedMod == null)
             SelectedMod = Mods.FirstOrDefault(m => string.Equals(m.Id, selectedId, StringComparison.OrdinalIgnoreCase));
         var plugins = Mods.Count(m => m.Info.HasPlugin);
-        Status = $"Found {plugins} plugin{(plugins == 1 ? "" : "s")} and {Mods.Count - plugins} other ini file{(Mods.Count - plugins == 1 ? "" : "s")} in {BinFolder}.";
+        Status = Loc.T("Found {0} and {1} in {2}.",
+            Loc.Plural(plugins, "1 plugin", "{0} plugins"),
+            Loc.Plural(Mods.Count - plugins, "1 other ini file", "{0} other ini files"),
+            BinFolder);
     }
 
     private bool FilterMod(ModViewModel m)
@@ -278,14 +333,14 @@ public sealed class MainViewModel : ObservableObject
     {
         var dlg = new OpenFolderDialog
         {
-            Title = "Choose the Crimson Desert folder (the one with bin64 in it)",
+            Title = Loc.T("Choose the Crimson Desert folder, the one with bin64 in it"),
             InitialDirectory = GameRoot ?? @"C:\Program Files (x86)\Steam\steamapps\common",
         };
         if (dlg.ShowDialog() != true) return;
         var root = GameLocator.Normalize(dlg.FolderName);
         if (root == null)
         {
-            MessageBox.Show($"{GameLocator.ExeName} is not in that folder or in a bin64 folder inside it.", "INI Master",
+            MessageBox.Show(Loc.T("{0} is not in that folder or in a bin64 folder inside it.", GameLocator.ExeName), "INI Master",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
@@ -307,13 +362,13 @@ public sealed class MainViewModel : ObservableObject
     {
         foreach (var f in Mods.SelectMany(m => m.Files)) f.FlushPendingSave();
         if (!HasUnsaved) return true;
-        var r = MessageBox.Show($"There are unsaved changes ({ChangeSummary}). Save them first?", "INI Master",
+        var r = MessageBox.Show(Loc.T("There are unsaved changes ({0}). Save them first?", ChangeSummary), "INI Master",
             MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
         if (r == MessageBoxResult.Cancel) return false;
         if (r == MessageBoxResult.No) return true;
         SaveAll();
         if (!HasUnsaved) return true;
-        MessageBox.Show($"Some changes were not saved ({ChangeSummary}).\n\n{Status}\n\nFix them, or choose No next time to discard them.",
+        MessageBox.Show(Loc.T("Some changes were not saved ({0}).\n\n{1}\n\nFix them, or choose No next time to discard them.", ChangeSummary, Status),
             "INI Master", MessageBoxButton.OK, MessageBoxImage.Warning);
         return false;
     }
@@ -337,9 +392,9 @@ public sealed class MainViewModel : ObservableObject
         var f = CurrentFile!;
         var dlg = new SaveFileDialog
         {
-            Title = "Save a metadata template for this ini",
+            Title = Loc.T("Save a metadata template for this ini"),
             FileName = Path.GetFileNameWithoutExtension(f.Path) + ModScanner.SidecarExtension,
-            Filter = "INI Master metadata (*.inimeta)|*.inimeta|All files|*.*",
+            Filter = Loc.T("INI Master metadata") + " (*.inimeta)|*.inimeta|" + Loc.T("All files") + "|*.*",
             InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
         };
         if (dlg.ShowDialog() != true) return;
@@ -348,29 +403,19 @@ public sealed class MainViewModel : ObservableObject
             var bytes = IniStore.ReadBytes(f.Path);
             var view = IniView.Build(f.Target, bytes == null ? null : IniDocument.Load(bytes));
             File.WriteAllText(dlg.FileName, MetaExporter.ToJson(view, f.FileName));
-            Status = $"Wrote {Path.GetFileName(dlg.FileName)}. Edit it, then ship it next to the ini or embed it in the plugin.";
+            Status = Loc.T("Wrote {0}. Edit it, then ship it next to the ini or embed it in the plugin.", Path.GetFileName(dlg.FileName));
         }
-        catch (Exception ex) { Status = "Could not write the template: " + ex.Message; }
+        catch (Exception ex) { Status = Loc.T("Could not write the template: {0}", ex.Message); }
     }
 
     private void OpenGuide()
     {
         var local = Path.Combine(AppContext.BaseDirectory, "docs", "METADATA.md");
         if (File.Exists(local)) OpenShell(local);
-        else MessageBox.Show(GuideText, "Adding help for INI Master", MessageBoxButton.OK, MessageBoxImage.Information);
+        else MessageBox.Show(GuideText, Loc.T("Adding help for INI Master"), MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
-    public const string GuideText =
-        "INI Master reads help for a setting from three places, and later ones win:\n\n" +
-        "1. The ini's own comments. The comment lines directly above a key are its help. " +
-        "Lines like \";   0  off\" and \";   1  on\" become choices, and \"; ---- name\" starts a group. " +
-        "A comment line that starts with ;@ sets things exactly, for example:\n" +
-        "   ;@ type=int min=0 max=100 unit=% label=\"Use cost\"\n\n" +
-        "2. A file named after the ini with the .inimeta extension, next to it. " +
-        "It holds JSON, or an annotated copy of the default ini.\n\n" +
-        "3. The plugin itself. Add the same .inimeta file to the plugin's .rc file:\n" +
-        "   INIMETA INIMETA \"MyMod.inimeta\"\n\n" +
-        "Tools > Export metadata template writes a starting .inimeta for the selected ini.";
+    public static string GuideText => Loc.T("INI Master reads help for a setting from three places, and later ones win:\n\n1. The ini's own comments. The comment lines directly above a key are its help. Lines like \";   0  off\" and \";   1  on\" become choices, and \"; ---- name\" starts a group. A comment line that starts with ;@ sets things exactly, for example:\n   ;@ type=int min=0 max=100 unit=% label=\"Use cost\"\n\n2. A file named after the ini with the .inimeta extension, next to it. It holds JSON, or an annotated copy of the default ini.\n\n3. The plugin itself. Add the same .inimeta file to the plugin's .rc file:\n   INIMETA INIMETA \"MyMod.inimeta\"\n\nAny text in the metadata can come in several languages. More > Export metadata template writes a starting .inimeta for the selected ini.");
 
     private static void OpenShell(string path)
     {

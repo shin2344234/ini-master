@@ -1,0 +1,166 @@
+# INI Master text for translation.
+#
+# Copy this file to INIMaster.<language>.txt, for example INIMaster.de.txt
+# or INIMaster.pt-br.txt, and write each translation after the tab at the
+# end of its line. \n is a line break. Lines starting with # are ignored.
+# A line left empty after the tab keeps the English.
+#
+# Keep every {0}, {1} and so on. Their order may change, but a line that
+# adds or drops one is skipped when the file loads, since it would show
+# the wrong values.
+#
+# Put the finished file in %LOCALAPPDATA%\INIMaster\lang, or in a lang
+# folder next to INIMaster.exe, then pick the language under More >
+# Language. docs/TRANSLATING.md has the rest.
+ (bundled with INI Master)	
+(empty)	
+(not in the file yet)	
+, then 	
+1 change	
+1 other ini file	
+1 plugin	
+1 unsaved change	
+@ directives in the ini	
+About this mod	
+Adding help for INI Master	
+All files	
+Any other value. The list covers the ones the comments name.	
+Back to the default: {0}	
+Checked every two seconds. Saving works either way; a running game only notices if the plugin rereads its ini.	
+Choose the Crimson Desert folder	
+Choose the Crimson Desert folder, the one with bin64 in it	
+Click, then press the key you want. Tab moves on.	
+Could not create {0}: {1}	
+Could not find Crimson Desert. Use the Game folder button to pick it.	
+Could not open the language folder: {0}	
+Could not read the plugin folder: {0}	
+Could not read {0}: {1}	
+Could not read: {0}	
+Could not save {0}: {1}	
+Could not write the template: {0}	
+Create it	
+Created {0} from the defaults the plugin describes.	
+Crimson Desert started. Changes still save straight to the ini files.	
+Crimson Desert was not found. Choose its folder.	
+Default: {0}	
+Described by: {0}	
+Discard text edits	
+Edit every value as the text in the file, for when a control guessed wrong.	
+Embedded help	
+Export metadata template...	
+File text	
+Find a mod	
+Find a setting (Ctrl+F)	
+Found {0} and {1} in {2}.	
+Game folder	
+Game not running	
+Game running	
+Help from {0}.	
+How mod makers add help	
+INI Master metadata	
+INI Master reads help for a setting from three places, and later ones win:\n\n1. The ini's own comments. The comment lines directly above a key are its help. Lines like ";   0  off" and ";   1  on" become choices, and "; ---- name" starts a group. A comment line that starts with ;@ sets things exactly, for example:\n   ;@ type=int min=0 max=100 unit=% label="Use cost"\n\n2. A file named after the ini with the .inimeta extension, next to it. It holds JSON, or an annotated copy of the default ini.\n\n3. The plugin itself. Add the same .inimeta file to the plugin's .rc file:\n   INIMETA INIMETA "MyMod.inimeta"\n\nAny text in the metadata can come in several languages. More > Export metadata template writes a starting .inimeta for the selected ini.	
+Language	
+Language: {0}.	
+Language: {0}. {1} lines of the translation were skipped because their placeholders did not match the English.	
+Loader, upscaler and overlay settings such as winmm.ini or OptiScaler.ini.	
+Mod page	
+Mods	
+More	
+Needs a number.	
+Needs a whole number.	
+Next launch	
+No key	
+No mod selected	
+No plugin with this name. The ini may belong to a DLL mod or an overlay.	
+No translation for {0} yet, so the app stays in English. Mod help still follows the language where the mod has it.	
+Nobody wrote help for this one yet.	
+Not one of the listed choices.	
+Not saved. {0}: {1}	
+Nothing to save. The text matches the file.	
+Off	
+On	
+Open backups of this ini	
+Open the plugin folder	
+Open this ini in the default editor	
+Other values are allowed too.	
+Pick a plugin on the left. If the list is empty, point INI Master at the Crimson Desert folder with the Game folder button.	
+Plain text values	
+Plugin: {0}	
+Press a key...	
+Range: {0} to {1}	
+Range: {0} to {1}, read from the comments and not enforced	
+Rescan plugins	
+Same as Windows: {0}	
+Save	
+Save a metadata template for this ini	
+Save all files	
+Save as I edit	
+Save text	
+Save this ini (Ctrl+S). Ctrl+Shift+S saves every file with changes.	
+Saved {0} as text.	
+Saved {0} to {1} at {2}.	
+Settings	
+Settings the mod maker marked as advanced.	
+Show advanced	
+Show ini files without a plugin	
+Skipped {0}: {1}	
+Some changes were not saved ({0}).\n\n{1}\n\nFix them, or choose No next time to discard them.	
+Something went wrong:\n\n{0}	
+Stored as a hex virtual-key code.	
+Stored as a key name. Ctrl, Shift and Alt combine with +.	
+Stored as a virtual-key code.	
+Takes effect the next time the game starts.	
+The comments mention {0} to {1}.	
+The file does not have this key. Changing it adds the key.	
+The file exactly as it is on disk. Edits here are saved as typed, comments and all.	
+The game is running and this plugin rereads its ini, so saved changes apply in game within a moment.	
+The game is running, but this plugin reads its ini only at startup. Changes save now and apply the next time the game starts.	
+The game is running. INI Master saves straight to the file; whether the game notices before a restart depends on the plugin, and this one does not say.	
+The game is running. If the plugin only reads its ini at startup, the change applies next launch.	
+The highest allowed is {0}.	
+The lowest allowed is {0}.	
+The mod maker added help for INI Master.	
+The plugin rereads it while the game runs.	
+The plugin rereads this while the game runs.	
+There are unsaved changes ({0}). Save them first?	
+This plugin reads its ini at startup, so restart the game to apply it.	
+This plugin reads the setting at startup. Saving works now; restart the game to see it.	
+Translate INI Master...	
+Type: {0}	
+Type: {0}, guessed from the value and comments	
+Undo this change (back to the value in the file)	
+Undo unsaved changes in this file	
+Unsaved changes	
+Windows refused to write {0}. If the game is under Program Files, run INI Master as administrator, or clear the file's read-only flag.	
+Write each change to the ini a moment after you make it, so a plugin that rereads its ini picks it up while you play.	
+Writes {0} for on and {1} for off.	
+Wrote {0}. Edit it, then ship it next to the ini or embed it in the plugin.	
+an .inimeta file	
+any	
+by {0}	
+choice	
+embedded marker	
+key	
+no ini	
+not in file	
+nothing, the type is a guess	
+number	
+on or off	
+resource {0}	
+text	
+the ini's comments	
+the ini's own comments	
+the plugin's embedded metadata	
+whole number	
+{0} (missing)	
+{0} changed on disk and was reloaded.	
+{0} changes	
+{0} does not exist yet. Most plugins write their ini the first time the game runs with them.	
+{0} does not exist yet. The plugin may write it on its first run, or you can create it now from the defaults it describes.	
+{0} is not in that folder or in a bin64 folder inside it.	
+{0} is saved as {1}, which has no "{2}".	
+{0} is saved as {1}, which has no "{2}". Use other characters, or convert the file to UTF-8 in a text editor.	
+{0} other ini files	
+{0} plugins	
+{0} unsaved changes	
+{0}, no plugin	

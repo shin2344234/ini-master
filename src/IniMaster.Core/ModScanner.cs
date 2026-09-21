@@ -156,7 +156,7 @@ public static class ModScanner
             try
             {
                 var text = TextCodec.Decode(File.ReadAllBytes(path), out _);
-                var m = MetaLoader.Load(text, MetaSource.Sidecar, Path.GetFileName(path) + (communityFolder != null && path.StartsWith(communityFolder, StringComparison.OrdinalIgnoreCase) ? " (bundled with INI Master)" : ""));
+                var m = MetaLoader.Load(text, MetaSource.Sidecar, Path.GetFileName(path) + (communityFolder != null && path.StartsWith(communityFolder, StringComparison.OrdinalIgnoreCase) ? Loc.T(" (bundled with INI Master)") : ""));
                 if (m.Ini != null && !m.Ini.Equals(Path.GetFileName(t.IniPath), StringComparison.OrdinalIgnoreCase)) continue;
                 sidecar = m;
                 used.Add(m.SourceDescription!);

@@ -176,7 +176,7 @@ public static class MetaLoader
             else if (opts.ValueKind == JsonValueKind.Object)
             {
                 foreach (var p in opts.EnumerateObject())
-                    list.Add(new OptionMeta { Value = p.Name, Label = Scalar(p.Value) });
+                    list.Add(new OptionMeta { Value = p.Name, Label = Text(p.Value) });
             }
             else if (opts.ValueKind == JsonValueKind.String)
             {
@@ -203,14 +203,21 @@ public static class MetaLoader
         return false;
     }
 
-    private static string? Str(JsonElement e, string name)
+    private static string? Str(JsonElement e, string name) =>
+        e.ValueKind == JsonValueKind.Object && TryGet(e, name, out var v) ? Text(v) : null;
+
+    /// A string, an array of lines for long help, or an object of either
+    /// keyed by language: { "en": "Cost", "de": "Kosten" }.
+    private static string? Text(JsonElement v)
     {
-        if (e.ValueKind != JsonValueKind.Object || !TryGet(e, name, out var v)) return null;
         if (v.ValueKind == JsonValueKind.Array)
+            return string.Join("\n", v.EnumerateArray().Select(Scalar).Where(x => x != null));
+        if (v.ValueKind == JsonValueKind.Object)
         {
-            // Long help may be written as an array of lines.
-            var parts = v.EnumerateArray().Select(Scalar).Where(x => x != null);
-            return string.Join("\n", parts);
+            var byLanguage = new List<KeyValuePair<string, string>>();
+            foreach (var p in v.EnumerateObject())
+                if (p.Value.ValueKind != JsonValueKind.Object && Text(p.Value) is { } t) byLanguage.Add(new(p.Name, t));
+            return Loc.Pick(byLanguage);
         }
         return Scalar(v);
     }

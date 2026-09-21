@@ -37,16 +37,15 @@ public sealed class ModViewModel : ObservableObject
     {
         get
         {
-            var ini = Files.Count == 0 ? "no ini" : string.Join(", ", Files.Select(f => f.FileName));
-            if (!Info.HasPlugin) return ini + ", no plugin";
-            var missing = Files.Count > 0 && Files.All(f => !f.Exists) ? " (missing)" : "";
-            return ini + missing;
+            var ini = Files.Count == 0 ? Loc.T("no ini") : string.Join(", ", Files.Select(f => f.FileName));
+            if (!Info.HasPlugin) return Loc.T("{0}, no plugin", ini);
+            return Files.Count > 0 && Files.All(f => !f.Exists) ? Loc.T("{0} (missing)", ini) : ini;
         }
     }
 
     public string SourceBadge => Info.BestSource switch
     {
-        MetaSource.Embedded => "Embedded help",
+        MetaSource.Embedded => Loc.T("Embedded help"),
         MetaSource.Sidecar => ".inimeta",
         _ => "",
     };
@@ -54,8 +53,8 @@ public sealed class ModViewModel : ObservableObject
     public bool HasBadge => SourceBadge.Length > 0;
 
     public string PluginText => Info.AsiPath == null
-        ? "No plugin with this name. The ini may belong to a DLL mod or an overlay."
-        : $"Plugin: {Path.GetFileName(Info.AsiPath)}";
+        ? Loc.T("No plugin with this name. The ini may belong to a DLL mod or an overlay.")
+        : Loc.T("Plugin: {0}", Path.GetFileName(Info.AsiPath));
 
     public string MetaText
     {
@@ -64,9 +63,9 @@ public sealed class ModViewModel : ObservableObject
             var f = SelectedFile;
             if (f == null) return "";
             var parts = new List<string>(f.Target.MetaSources);
-            if (parts.Count == 0) parts.Add("the ini's own comments");
-            var text = "Help from " + string.Join(", then ", parts) + ".";
-            if (f.Target.MetaErrors.Count > 0) text += " Could not read: " + string.Join("; ", f.Target.MetaErrors);
+            if (parts.Count == 0) parts.Add(Loc.T("the ini's own comments"));
+            var text = Loc.T("Help from {0}.", string.Join(Loc.T(", then "), parts));
+            if (f.Target.MetaErrors.Count > 0) text += " " + Loc.T("Could not read: {0}", string.Join("; ", f.Target.MetaErrors));
             return text;
         }
     }
@@ -90,10 +89,9 @@ public sealed class ModViewModel : ObservableObject
         foreach (var t in info.Files)
         {
             var existing = Files.FirstOrDefault(f => string.Equals(f.Path, t.IniPath, StringComparison.OrdinalIgnoreCase));
-            if (existing != null)
-            {
-                if (_loaded) existing.UpdateTarget(t);
-            }
+            // A file not shown yet still takes the new metadata, so it opens
+            // with it later instead of with what the first scan found.
+            if (existing != null) existing.UpdateTarget(t, load: _loaded);
             else
             {
                 var vm = new IniFileViewModel(_main, t);
@@ -108,4 +106,11 @@ public sealed class ModViewModel : ObservableObject
     }
 
     public void RaiseChanges() => Raise(nameof(HasChanges), nameof(Subtitle));
+
+    /// After a language change: every computed text, here and in the files.
+    public void RefreshText()
+    {
+        Raise(string.Empty);
+        foreach (var f in Files) f.RefreshText();
+    }
 }

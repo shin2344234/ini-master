@@ -1,6 +1,7 @@
 <Application x:Class="IniMaster.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="clr-namespace:IniMaster.Localization"
              xmlns:c="clr-namespace:IniMaster.Controls"
              xmlns:vm="clr-namespace:IniMaster.ViewModels">
     <Application.Resources>
@@ -13,8 +14,6 @@
             <c:VisibleWhenConverter x:Key="Hidden" Invert="True" />
             <c:NotConverter x:Key="Not" />
 
-            <FontFamily x:Key="IconFont">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
-            <FontFamily x:Key="MonoFont">Cascadia Mono, Consolas</FontFamily>
 
             <Style x:Key="Secondary" TargetType="TextBlock">
                 <Setter Property="Foreground" Value="{StaticResource TextDim}" />
@@ -88,14 +87,14 @@
                     <ComboBox Width="260" ItemsSource="{Binding Options}" SelectedItem="{Binding SelectedOption}" DisplayMemberPath="Display" />
                     <TextBox Width="90" Margin="8,0,0,0" Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" FontFamily="{StaticResource MonoFont}"
                              Visibility="{Binding AllowCustom, Converter={StaticResource Visible}}"
-                             ToolTip="Any other value. The list covers the ones the comments name." />
+                             ToolTip="{l:T 'Any other value. The list covers the ones the comments name.'}" />
                 </StackPanel>
             </DataTemplate>
 
             <DataTemplate x:Key="KeyEditor" DataType="{x:Type vm:SettingViewModel}">
                 <StackPanel Orientation="Horizontal">
                     <c:KeyCaptureBox Width="220" Value="{Binding Value}" Format="{Binding KeyFormat}" />
-                    <Button Style="{StaticResource IconButton}" Content="&#xE711;" Command="{Binding ClearKeyCommand}" ToolTip="No key" />
+                    <Button Style="{StaticResource IconButton}" Content="&#xE711;" Command="{Binding ClearKeyCommand}" ToolTip="{l:T 'No key'}" />
                 </StackPanel>
             </DataTemplate>
         </ResourceDictionary>

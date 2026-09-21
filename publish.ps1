@@ -24,11 +24,12 @@ $version = ($proj.Project.PropertyGroup | Where-Object Version | Select-Object -
 
 $stage = Join-Path $dist 'stage'
 Remove-Item $stage -Recurse -Force -ErrorAction SilentlyContinue
-New-Item -ItemType Directory -Force "$stage\docs", "$stage\sdk\example", "$stage\inimeta" | Out-Null
+New-Item -ItemType Directory -Force "$stage\docs", "$stage\sdk\example", "$stage\inimeta", "$stage\lang" | Out-Null
 Copy-Item "$out\INIMaster.exe" $stage
 Copy-Item "$out\inimeta\*" "$stage\inimeta" -ErrorAction SilentlyContinue
 Copy-Item (Join-Path $root 'README.md') $stage
-Copy-Item (Join-Path $root 'docs\METADATA.md') "$stage\docs"
+Copy-Item (Join-Path $root 'docs\METADATA.md'), (Join-Path $root 'docs\TRANSLATING.md') "$stage\docs"
+Copy-Item (Join-Path $root 'lang\INIMaster.*.txt') "$stage\lang"
 Copy-Item (Join-Path $root 'sdk\inimaster.h') "$stage\sdk"
 Get-ChildItem (Join-Path $root 'sdk\example') -File | Copy-Item -Destination "$stage\sdk\example"
 

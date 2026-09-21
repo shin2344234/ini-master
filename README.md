@@ -14,6 +14,10 @@ Run `INIMaster.exe`. It finds the game through Steam's library list, Epic's mani
 - "Plain text values" swaps every control for the raw text, for when a guess about a setting's type is wrong. The File text tab edits the whole file.
 - The first save of each file in a session copies the old file to `%LOCALAPPDATA%\INIMaster\backups`. More, Open backups of this ini goes there.
 
+INI Master shows its own text in the Windows language when it has a translation for it, and English otherwise. More, Language picks another. Mods that ship help in several languages show it in the same one. [docs/TRANSLATING.md](docs/TRANSLATING.md) explains how to add a language.
+
+Text in any script reads and saves correctly, in UTF-8, UTF-16 or the Windows code page the file already uses. If a value holds a character the file's code page cannot store, INI Master refuses to save it and says which character, instead of writing a question mark.
+
 Saving rewrites only the values you changed. Comments, blank lines, key order, spacing, line endings and encoding stay exactly as they were. If a plugin rewrites its own ini while INI Master is open, the page reloads with the new values and keeps your unsaved edits on top.
 
 ## For mod makers
@@ -40,7 +44,7 @@ dotnet test tests/IniMaster.Tests
 pwsh ./publish.ps1
 ```
 
-`publish.ps1` writes `dist/INIMaster.exe`, a single self-contained file that needs no .NET install, and `dist/INIMaster-<version>.zip` holding that exe with the docs and the SDK. `sdk/example/build.bat` builds the example plugin with MSVC Build Tools 2022.
+`publish.ps1` writes `dist/INIMaster.exe`, a single self-contained file that needs no .NET install, and `dist/INIMaster-<version>.zip` holding that exe with the docs, the translation template and the SDK. `sdk/example/build.bat` builds the example plugin with MSVC Build Tools 2022.
 
 ## Layout
 
@@ -49,4 +53,6 @@ pwsh ./publish.ps1
     tests                 xUnit tests, including a compiled example plugin
     sdk                   inimaster.h and the example plugin
     docs/METADATA.md      the metadata format
+    docs/TRANSLATING.md   how to translate the app
+    lang                  the translation template, and translations built into the exe
     inimeta               community .inimeta files shipped with the app

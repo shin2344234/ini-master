@@ -46,6 +46,8 @@
 
     <FontFamily x:Key="SerifFont">Georgia, Constantia, Cambria, Times New Roman</FontFamily>
     <FontFamily x:Key="BodyFont">Segoe UI, Tahoma, Arial</FontFamily>
+    <FontFamily x:Key="IconFont">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+    <FontFamily x:Key="MonoFont">Cascadia Mono, Consolas</FontFamily>
 
     <!-- The focus rectangle ImGui draws: a thin gold outline. -->
     <Style x:Key="GoldFocus">
@@ -341,7 +343,9 @@
                         <Border DockPanel.Dock="Top" BorderBrush="{StaticResource Bronze}" BorderThickness="0,0,0,1">
                             <TabPanel IsItemsHost="True" />
                         </Border>
-                        <ContentPresenter ContentSource="SelectedContent" />
+                        <!-- TabItemAutomationPeer finds the page by this name. Without it
+                             UI Automation and screen readers see nothing inside the tabs. -->
+                        <ContentPresenter x:Name="PART_SelectedContentHost" ContentSource="SelectedContent" />
                     </DockPanel>
                 </ControlTemplate>
             </Setter.Value>
@@ -550,14 +554,36 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="MenuItem">
-                    <Border x:Name="B" Background="Transparent" Padding="14,6" MinWidth="280">
-                        <DockPanel>
-                            <TextBlock DockPanel.Dock="Right" Text="{TemplateBinding InputGestureText}" Margin="24,0,0,0"
-                                       Foreground="{StaticResource TextDim}" />
-                            <ContentPresenter ContentSource="Header" RecognizesAccessKey="True" />
-                        </DockPanel>
-                    </Border>
+                    <Grid>
+                        <Border x:Name="B" Background="Transparent" Padding="14,6" MinWidth="280">
+                            <DockPanel>
+                                <!-- A submenu opens to the left, since the menu sits at the window's right edge. -->
+                                <TextBlock x:Name="Arrow" DockPanel.Dock="Left" Text="&#xE76B;" FontFamily="{StaticResource IconFont}" FontSize="10"
+                                           Margin="0,0,10,0" VerticalAlignment="Center" Foreground="{StaticResource GoldDim}" Visibility="Collapsed" />
+                                <TextBlock x:Name="Check" DockPanel.Dock="Left" Width="22" Text="&#xE73E;" FontFamily="{StaticResource IconFont}"
+                                           FontSize="12" VerticalAlignment="Center" Foreground="{StaticResource Gold}" Visibility="Collapsed" />
+                                <TextBlock DockPanel.Dock="Right" Text="{TemplateBinding InputGestureText}" Margin="24,0,0,0"
+                                           Foreground="{StaticResource TextDim}" />
+                                <ContentPresenter ContentSource="Header" RecognizesAccessKey="True" />
+                            </DockPanel>
+                        </Border>
+                        <Popup x:Name="PART_Popup" Placement="Left" HorizontalOffset="-2" AllowsTransparency="True" Focusable="False"
+                               PopupAnimation="None" IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}">
+                            <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Bronze}" BorderThickness="1" Padding="0,4">
+                                <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle" />
+                            </Border>
+                        </Popup>
+                    </Grid>
                     <ControlTemplate.Triggers>
+                        <Trigger Property="Role" Value="SubmenuHeader">
+                            <Setter TargetName="Arrow" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsCheckable" Value="True">
+                            <Setter TargetName="Check" Property="Visibility" Value="Hidden" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Check" Property="Visibility" Value="Visible" />
+                        </Trigger>
                         <Trigger Property="IsHighlighted" Value="True">
                             <Setter TargetName="B" Property="Background" Value="{StaticResource Selection}" />
                         </Trigger>
