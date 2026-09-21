@@ -107,6 +107,36 @@ public partial class LocalizationTests
         Assert.Equal(0, ignored);
     }
 
+    /// A shipped translation must load whole: no line skipped for its
+    /// placeholders and no English that the app no longer shows.
+    [Fact]
+    public void ShippedTranslationsMatchTheTemplate()
+    {
+        var english = ExtractStrings(out _);
+        var files = Directory.GetFiles(Path.Combine(RepoRoot, "lang"), "INIMaster.*.txt").Where(f => !f.EndsWith(Loc.TemplateName)).ToList();
+        Assert.NotEmpty(files);
+        foreach (var f in files)
+        {
+            var table = Loc.Parse(File.ReadAllText(f), out var ignored);
+            Assert.True(ignored == 0, $"{Path.GetFileName(f)}: {ignored} lines have the wrong placeholders");
+            var stale = table.Keys.Where(k => !english.Contains(k)).ToList();
+            Assert.True(stale.Count == 0, $"{Path.GetFileName(f)} translates text the app no longer has:\n" + string.Join("\n", stale));
+        }
+    }
+
+    [Fact]
+    public void GermanIsBuiltIn()
+    {
+        try
+        {
+            Assert.Equal("built in", Loc.Use("de-DE", Array.Empty<string>()));
+            Assert.Equal("Speichern", Loc.T("Save"));
+            Assert.Equal("3 ungespeicherte Änderungen", Loc.Plural(3, "1 unsaved change", "{0} unsaved changes"));
+            Assert.Contains("de", Loc.Available(Array.Empty<string>()));
+        }
+        finally { Loc.Use("en", Array.Empty<string>()); }
+    }
+
     [GeneratedRegex(@"\bLoc\.T\(\s*""(?<s>(?:[^""\\]|\\.)*)""")]
     private static partial Regex CsT();
 

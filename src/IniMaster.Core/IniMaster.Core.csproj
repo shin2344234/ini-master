@@ -6,8 +6,10 @@
     <RootNamespace>IniMaster.Core</RootNamespace>
     <NoWarn>$(NoWarn);CS1591;CS1587</NoWarn>
   </PropertyGroup>
-  <!-- Finished translations ship inside the exe; see Loc.Embedded. -->
+  <!-- Finished translations ship inside the exe; see Loc.Embedded. WithCulture
+       stops MSBuild reading the "de" in INIMaster.de.txt as a culture and moving
+       the file into a satellite assembly, which a Release build strips. -->
   <ItemGroup>
-    <EmbeddedResource Include="..\..\lang\INIMaster.*.txt" Exclude="..\..\lang\INIMaster.template.txt" LogicalName="lang.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\..\lang\INIMaster.*.txt" Exclude="..\..\lang\INIMaster.template.txt" LogicalName="lang.%(Filename)%(Extension)" WithCulture="false" />
   </ItemGroup>
 </Project>
