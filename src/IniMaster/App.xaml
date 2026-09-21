@@ -13,6 +13,7 @@
             <c:VisibleWhenConverter x:Key="Visible" />
             <c:VisibleWhenConverter x:Key="Hidden" Invert="True" />
             <c:NotConverter x:Key="Not" />
+            <c:NarrowerThanConverter x:Key="NarrowerThan" />
 
 
             <Style x:Key="Secondary" TargetType="TextBlock">

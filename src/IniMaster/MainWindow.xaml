@@ -39,14 +39,21 @@
                     Visibility="{Binding IsVisible, Converter={StaticResource Visible}}"
                     PreviewMouseDown="Row_Select" GotKeyboardFocus="Row_Select"
                     ToolTip="{Binding ToolTipText}" ToolTipService.ShowDuration="60000" ToolTipService.InitialShowDelay="600">
+                <!-- Label, editor and buttons side by side. A row narrower than the
+                     three columns' minimums (see the trigger below) puts the editor on
+                     a second line under the label instead of cutting it off. -->
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" MinWidth="240" />
-                        <ColumnDefinition Width="Auto" MinWidth="360" />
+                        <ColumnDefinition x:Name="LabelColumn" Width="*" MinWidth="240" />
+                        <ColumnDefinition x:Name="EditorColumn" Width="Auto" MinWidth="360" />
                         <ColumnDefinition Width="80" />
                     </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
 
-                    <StackPanel Margin="0,0,16,0" VerticalAlignment="Center">
+                    <StackPanel x:Name="LabelPanel" Margin="0,0,16,0" VerticalAlignment="Center">
                         <WrapPanel>
                             <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
                             <TextBlock Text="{Binding Key}" Margin="8,0,0,0" FontSize="11" VerticalAlignment="Center"
@@ -72,7 +79,7 @@
                                    Visibility="{Binding HasWarning, Converter={StaticResource Visible}}" />
                     </StackPanel>
 
-                    <ContentControl Grid.Column="1" Content="{Binding}" VerticalAlignment="Center" HorizontalAlignment="Left" Focusable="False"
+                    <ContentControl x:Name="Editor" Grid.Column="1" Content="{Binding}" VerticalAlignment="Center" HorizontalAlignment="Left" Focusable="False"
                                     IsEnabled="{Binding ReadOnly, Converter={StaticResource Not}}">
                         <ContentControl.Style>
                             <Style TargetType="ContentControl">
@@ -104,7 +111,7 @@
                         </ContentControl.Style>
                     </ContentControl>
 
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <StackPanel x:Name="RowButtons" Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                         <Button Style="{StaticResource IconButton}" Content="&#xE7A7;" Command="{Binding RevertCommand}"
                                 Visibility="{Binding IsDirty, Converter={StaticResource Visible}}" ToolTip="{l:T 'Undo this change (back to the value in the file)'}" />
                         <Button Style="{StaticResource IconButton}" Content="&#xE72C;" Command="{Binding ResetCommand}"
@@ -120,6 +127,21 @@
                 <DataTrigger Binding="{Binding IsDirty}" Value="True">
                     <Setter TargetName="Row" Property="Background" Value="{StaticResource RowDirty}" />
                     <Setter TargetName="Row" Property="BorderBrush" Value="{StaticResource Gold}" />
+                </DataTrigger>
+                <!-- 700 is the three column minimums (240, 360, 80) plus the padding.
+                     The row's width comes from the page, not its content, so moving
+                     the editor cannot flip this back and forth. -->
+                <DataTrigger Binding="{Binding ActualWidth, ElementName=Row, Converter={StaticResource NarrowerThan}, ConverterParameter=700}" Value="True">
+                    <Setter TargetName="LabelColumn" Property="MinWidth" Value="0" />
+                    <Setter TargetName="EditorColumn" Property="MinWidth" Value="0" />
+                    <Setter TargetName="LabelPanel" Property="Grid.ColumnSpan" Value="3" />
+                    <Setter TargetName="LabelPanel" Property="Margin" Value="0" />
+                    <Setter TargetName="Editor" Property="Grid.Row" Value="1" />
+                    <Setter TargetName="Editor" Property="Grid.Column" Value="0" />
+                    <Setter TargetName="Editor" Property="Grid.ColumnSpan" Value="2" />
+                    <Setter TargetName="Editor" Property="Margin" Value="0,6,0,0" />
+                    <Setter TargetName="RowButtons" Property="Grid.Row" Value="1" />
+                    <Setter TargetName="RowButtons" Property="Margin" Value="0,6,0,0" />
                 </DataTrigger>
             </DataTemplate.Triggers>
         </DataTemplate>
@@ -219,20 +241,23 @@
                     </Button>
                 </StackPanel>
 
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="INI MASTER" FontFamily="{StaticResource SerifFont}" FontSize="22" Foreground="{StaticResource Gold}"
+                <!-- A DockPanel, not a StackPanel, so the path gets only the width
+                     left over and trims to it instead of running under the right side. -->
+                <DockPanel VerticalAlignment="Center" LastChildFill="True">
+                    <TextBlock DockPanel.Dock="Left" Text="INI MASTER" FontFamily="{StaticResource SerifFont}" FontSize="22" Foreground="{StaticResource Gold}"
                                VerticalAlignment="Center" />
-                    <TextBlock x:Name="VersionText" Margin="10,0,0,1" VerticalAlignment="Bottom" Style="{StaticResource Caption}" />
-                    <Button Command="{Binding BrowseCommand}" Margin="22,0,0,0" Padding="10,4" ToolTip="{l:T 'Choose the Crimson Desert folder'}">
+                    <TextBlock DockPanel.Dock="Left" x:Name="VersionText" Margin="10,0,0,1" VerticalAlignment="Bottom" Style="{StaticResource Caption}" />
+                    <Button DockPanel.Dock="Left" Command="{Binding BrowseCommand}" Margin="22,0,0,0" Padding="10,4" ToolTip="{l:T 'Choose the Crimson Desert folder'}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE8B7;" FontFamily="{StaticResource IconFont}" Margin="0,1,8,0" VerticalAlignment="Center"
                                        Foreground="{StaticResource GoldDim}" />
                             <TextBlock Text="{l:T 'Game folder'}" />
                         </StackPanel>
                     </Button>
-                    <TextBlock Text="{Binding GameRootText}" Margin="12,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
-                               MaxWidth="440" Style="{StaticResource Caption}" TextWrapping="NoWrap" ToolTip="{Binding BinFolder}" />
-                </StackPanel>
+                    <TextBlock Text="{Binding GameRootText}" Margin="12,0,16,0" VerticalAlignment="Center" HorizontalAlignment="Left"
+                               TextTrimming="CharacterEllipsis" MaxWidth="440" Style="{StaticResource Caption}" TextWrapping="NoWrap"
+                               ToolTip="{Binding BinFolder}" />
+                </DockPanel>
             </DockPanel>
             <!-- The menu's double rule: bronze across, gold for the first third. -->
             <Grid Margin="0,10,0,0" Height="6">
