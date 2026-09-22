@@ -72,6 +72,9 @@ public static class MetaLoader
         }
         // Keep the file's own section order, including sections with no keys.
         foreach (var name in doc.SectionNames()) meta.GetOrAddSection(name);
+        // The headings and notes written here are part of the help, and no
+        // other field carries them.
+        foreach (var (name, items) in analysis.Layout) meta.Layout[name] = items;
         meta.DefaultIniText = text;
         return meta;
     }

@@ -166,7 +166,9 @@ To keep the comments as well, say so in the metadata:
 "comments": true
 ```
 
-The same field with `false` turns the comments off for a `.inimeta` file shipped next to the ini, which otherwise leaves them on.
+The same field with `false` turns the comments off for a `.inimeta` file shipped next to the ini, which otherwise leaves them on. The ini can answer for itself with `;@mod comments=true` or `;@mod comments=false` on a line of its own, which the metadata then overrides if it says anything.
+
+Metadata written as an annotated default ini is the exception. Its own `; ---- name` headings and its notes are part of the help you wrote, so they still show, wherever the shipped ini has the matching keys.
 
 ## 5. Reloading while the game runs
 

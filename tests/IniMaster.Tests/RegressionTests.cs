@@ -142,6 +142,60 @@ public class RegressionTests
         Assert.Equal(new[] { "slow", "fast" }, speed.Options.Select(o => o.Label));
     }
 
+    // ------------------------------------------------- the 1.2.5 review
+
+    [Theory]
+    [InlineData(";@mod comments=true")]
+    [InlineData(";@ mod comments=1")]
+    [InlineData("#@mod useComments=true")]
+    public void TheIniItselfCanAskForItsCommentsBack(string directive)
+    {
+        var v = View(directive + "\n" + CommentedIni, Meta(MetaSource.Embedded, SpeedJson));
+        Assert.True(v.UsesComments);
+        Assert.Equal("Comment help for a key the metadata says nothing about.",
+            v.Settings.Single(s => s.Setting.Key == "Other").Setting.Help);
+        Assert.Contains(v.Sections[0].Items, i => i is ViewGroup { Title: "Movement" });
+    }
+
+    [Fact]
+    public void TheIniItselfCanTurnItsCommentsOff()
+    {
+        var v = View(";@mod comments=false\n" + CommentedIni, new ModMeta());
+        Assert.False(v.UsesComments);
+        Assert.Null(v.Settings.Single(s => s.Setting.Key == "Other").Setting.Help);
+        Assert.DoesNotContain(v.Sections[0].Items, i => i is ViewNote or ViewGroup);
+    }
+
+    [Fact]
+    public void TheMetadataStillOverrulesTheIniDirective()
+    {
+        var json = """{ "comments": false, "sections": { "settings": { "keys": { "Speed": { "type": "int" } } } } }""";
+        var v = View(";@mod comments=true\n" + CommentedIni, Meta(MetaSource.Embedded, json));
+        Assert.False(v.UsesComments);
+    }
+
+    /// An annotated default ini is the only place its headings and notes exist,
+    /// so leaving the file's comments out must not take them with it.
+    [Fact]
+    public void AnnotatedMetadataKeepsItsGroupsAndNotes()
+    {
+        var v = View("[settings]\nSpeed=1\nOther=2\n", Meta(MetaSource.Embedded, CommentedIni));
+        Assert.False(v.UsesComments);
+        var items = v.Sections[0].Items;
+        Assert.Contains(items, i => i is ViewGroup { Title: "Movement" });
+        Assert.Contains(items, i => i is ViewNote n && n.Text.Contains("This paragraph is a note."));
+        // The heading introduces the key that followed it in the metadata.
+        Assert.True(items.FindIndex(i => i is ViewGroup) < items.FindIndex(i => i is ViewSetting));
+        Assert.StartsWith("How fast you go.", v.Settings.Single(s => s.Setting.Key == "Speed").Setting.Help);
+    }
+
+    [Fact]
+    public void JsonMetadataBringsNoHeadingsOfItsOwn()
+    {
+        var v = View(CommentedIni, Meta(MetaSource.Embedded, SpeedJson));
+        Assert.DoesNotContain(v.Sections[0].Items, i => i is ViewNote or ViewGroup);
+    }
+
     [Theory]
     [InlineData("\"\"")]
     [InlineData("\"   \"")]

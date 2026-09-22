@@ -147,6 +147,11 @@ public sealed class ModMeta
     /// Raw text of an annotated default ini, when the metadata came as one.
     /// Used to create a missing ini with every comment intact.
     public string? DefaultIniText { get; set; }
+    /// Group headings and notes the metadata carries itself, per section, when
+    /// it came as an annotated default ini. The page falls back on these when
+    /// the file's own comments are left out, since nothing else can express
+    /// them.
+    public Dictionary<string, List<LayoutItem>> Layout { get; } = new(StringComparer.OrdinalIgnoreCase);
     public List<string> SectionOrder { get; } = new();
     public Dictionary<string, SectionMeta> Sections { get; } = new(StringComparer.OrdinalIgnoreCase);
     public MetaSource Source { get; set; }
@@ -178,6 +183,7 @@ public sealed class ModMeta
         Ini = o.Ini ?? Ini;
         UseComments = o.UseComments ?? UseComments;
         DefaultIniText = o.DefaultIniText ?? DefaultIniText;
+        foreach (var (name, items) in o.Layout) Layout[name] = items;
         foreach (var name in o.SectionOrder) GetOrAddSection(name).OverlayWith(o.Sections[name]);
         if (o.Source > Source) Source = o.Source;
     }

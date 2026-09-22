@@ -225,6 +225,36 @@ public partial class LocalizationTests
     public void RelativesShareTheWritingSystem(string tag, string[] available, string[] expected) =>
         Assert.Equal(expected, Loc.RelativesOf(tag, available.Append("en")));
 
+    /// A tag that names the writing system and no region, which is what a
+    /// language list can hold, must not land on the other script's file.
+    [Theory]
+    [InlineData("zh-Hant", new[] { "zh-cn", "zh-tw" }, new[] { "zh-tw" })]
+    [InlineData("zh-Hans", new[] { "zh-cn", "zh-tw" }, new[] { "zh-cn" })]
+    public void AScriptTagKeepsItsWritingSystem(string tag, string[] available, string[] expected)
+    {
+        Assert.Equal(expected, Loc.RelativesOf(tag, available.Append("en")));
+        try
+        {
+            Assert.Equal("built in", Loc.Use(tag, Array.Empty<string>()));
+            Assert.Equal(tag == "zh-Hant" ? "儲存" : "保存", Loc.T("Save"));
+        }
+        finally { Loc.Use("en", Array.Empty<string>()); }
+    }
+
+    /// The file that was read counts for mod metadata too, so a Hong Kong
+    /// window reading the zh-TW file also reads zh-TW help.
+    [Fact]
+    public void ModHelpFollowsTheFileThatWasRead()
+    {
+        var texts = new Dictionary<string, string> { ["en"] = "Cost", ["zh-TW"] = "費用" };
+        Assert.Equal("費用", InLanguage("zh-HK", () => Loc.Pick(texts)));
+        Assert.Equal("費用", InLanguage("zh-MO", () => Loc.Pick(texts)));
+        // Simplified regions still take the Simplified file and its help.
+        Assert.Equal("Cost", InLanguage("zh-SG", () => Loc.Pick(texts)));
+        // A language with no file at all leaves the chain alone.
+        Assert.Equal("Cost", InLanguage("sw", () => Loc.Pick(texts)));
+    }
+
     [Fact]
     public void PluralUsesTheCount()
     {

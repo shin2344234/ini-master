@@ -66,6 +66,7 @@ How mod makers add help
 INI Master metadata	
 INI Master reads help for a setting from three places, and later ones win:\n\n1. The ini's own comments. The comment lines directly above a key are its help. Lines like ";   0  off" and ";   1  on" become choices, and "; ---- name" starts a group. A comment line that starts with ;@ sets things exactly, for example:\n   ;@ type=int min=0 max=100 unit=% label="Use cost"\n\n2. A file named after the ini with the .inimeta extension, next to it. It holds JSON, or an annotated copy of the default ini.\n\n3. The plugin itself. Add the same .inimeta file to the plugin's .rc file:\n   INIMETA INIMETA "MyMod.inimeta"\n\nAny text in the metadata can come in several languages. More > Export metadata template writes a starting .inimeta for the selected ini.	
 INI Master {0} is out. You have {1}.\n\n{2}\n\nDownload and install it now?	
+INI Master {0} is out. You have {1}.\n\n{2}\n\nThe release lists no checksum, so open the download page?	
 INI Master {0} is out. You have {1}.\n\n{2}\n\nThis copy cannot replace itself, so open the download page?	
 INI Master {0} is the newest version.	
 Installing INI Master {0}...	

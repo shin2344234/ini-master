@@ -74,14 +74,18 @@ public static partial class Loc
         return chain;
     }
 
-    /// The writing system Windows gives a language, such as zh-hant for
-    /// zh-TW. Null when it has only one.
+    /// The writing system Windows gives a language, such as zh-hant for zh-TW
+    /// and for zh-Hant itself. Null when it has only one. A script is the four
+    /// letter part, which is what tells zh-Hant from zh-TW.
     private static string? Script(string tag)
     {
         try
         {
-            for (var c = CultureInfo.GetCultureInfo(tag).Parent; c != null && c.Name.Length > 0; c = c.Parent)
-                if (c.Name.Contains('-')) return Normalize(c.Name);
+            for (var c = CultureInfo.GetCultureInfo(tag); c != null && c.Name.Length > 0; c = c.Parent)
+            {
+                var parts = c.Name.Split('-');
+                if (parts.Length > 1 && parts[1].Length == 4) return Normalize(parts[0] + "-" + parts[1]);
+            }
         }
         catch (CultureNotFoundException) { }
         return null;
@@ -113,11 +117,13 @@ public static partial class Loc
         string? source = null;
         var ignored = 0;
         var folderList = folders as IList<string> ?? folders.ToList();
+        string? used = null;
         // The language and its parents first, then another region of the same
         // language, which still reads better than English.
         foreach (var lang in chain.Concat(RelativesOf(tag, Available(folderList))))
         {
             if (lang == "en") break;
+            used = lang;
             foreach (var folder in folderList)
             {
                 var path = Path.Combine(folder, FilePrefix + lang + FileSuffix);
@@ -136,7 +142,12 @@ public static partial class Loc
         }
         _table = table ?? new Dictionary<string, string>(StringComparer.Ordinal);
         Language = chain[0];
-        Chain = chain;
+        // A mod's own translations follow the same chain, and the file that was
+        // read counts too. Without this a zh-HK window reading the zh-TW file
+        // would still show every mod's help in English.
+        Chain = table != null && used != null && !chain.Contains(used)
+            ? chain.Append(used).ToList()
+            : chain;
         SourcePath = source;
         IgnoredLines = ignored;
         Changed?.Invoke();

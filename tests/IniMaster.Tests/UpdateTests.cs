@@ -128,6 +128,72 @@ public class UpdateTests
         Assert.True(Updates.SameSigner(exe, exe));
     }
 
+    /// The certificate stays readable on a file that was edited after signing,
+    /// so reading it is not a check. Windows has to say the signature still
+    /// covers the bytes.
+    [Fact]
+    public void AnEditedCopyIsNotTheSameSigner()
+    {
+        if (SignedExe is not { } exe) return;
+        var dir = Directory.CreateTempSubdirectory("inimaster-tamper").FullName;
+        try
+        {
+            var good = Path.Combine(dir, "good.exe");
+            var edited = Path.Combine(dir, "edited.exe");
+            File.Copy(exe, good);
+            var bytes = File.ReadAllBytes(exe);
+            bytes[0x10000] ^= 0xFF;
+            File.WriteAllBytes(edited, bytes);
+
+            Assert.True(Updates.HasValidSignature(good));
+            Assert.False(Updates.HasValidSignature(edited));
+            // The certificate is still there and still reads as the same one.
+            Assert.Equal(Updates.Signer(good)!.Value.Thumbprint, Updates.Signer(edited)!.Value.Thumbprint);
+            Assert.False(Updates.SameSigner(good, edited));
+            Assert.Throws<InvalidOperationException>(() => Updates.Apply(edited, good));
+            Assert.Equal(new FileInfo(exe).Length, new FileInfo(good).Length);
+            Assert.False(File.Exists(good + ".old"));
+            Assert.False(File.Exists(good + ".new"));
+        }
+        finally { Directory.Delete(dir, true); }
+    }
+
+    [Fact]
+    public async Task RefusesADownloadWithNoChecksumToCheckItAgainst()
+    {
+        var withDigest = Updates.Parse(ReleaseJson)!;
+        var none = Updates.Parse(ReleaseJson.Replace("\"digest\": \"sha256:BFF19D283F991C20B98F17DAA5B3D6BF8F89EB5E1564A6BCE5067969DF7B2447\",", ""))!;
+        Assert.Null(none.Sha256);
+        Assert.NotNull(withDigest.Sha256);
+        // A digest in some other algorithm is no better than none.
+        Assert.Null(Updates.Parse(ReleaseJson.Replace("sha256:BFF19D28", "md5:BFF19D28"))!.Sha256);
+
+        using var http = new HttpClient();
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => Updates.DownloadAsync(none, http, null));
+        Assert.Contains("SHA-256", ex.Message);
+    }
+
+    /// A failed install can leave part of a file where the exe belongs, and
+    /// putting the working copy back has to win over it.
+    [Fact]
+    public void PutsTheWorkingCopyBackOverAPartialInstall()
+    {
+        var dir = Directory.CreateTempSubdirectory("inimaster-restore").FullName;
+        try
+        {
+            var target = Path.Combine(dir, "INIMaster.exe");
+            var old = target + ".old";
+            File.WriteAllText(old, "the copy that was running");
+            File.WriteAllText(target, "half a file");
+
+            Updates.Restore(old, target);
+
+            Assert.Equal("the copy that was running", File.ReadAllText(target));
+            Assert.False(File.Exists(old));
+        }
+        finally { Directory.Delete(dir, true); }
+    }
+
     [Fact]
     public void ReplacesTheExeAndKeepsTheOldOneAside()
     {
@@ -145,6 +211,7 @@ public class UpdateTests
 
             Assert.Equal(size, new FileInfo(target).Length);
             Assert.True(File.Exists(target + ".old"), "the copy it replaced is kept until the next start");
+            Assert.False(File.Exists(target + ".new"), "the staged copy is moved, not left behind");
             Assert.False(File.Exists(downloaded), "the download is cleaned up");
             Assert.True(Updates.CanReplaceExe(target));
 

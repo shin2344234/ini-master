@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
@@ -12,8 +13,9 @@ public sealed record ReleaseInfo(Version Version, string Tag, string PageUrl, st
 
 /// Checks GitHub for a newer INI Master and installs it after the person
 /// says yes. Nothing is downloaded before that, and nothing is installed
-/// unless the file GitHub serves is signed by the same certificate as the
-/// copy already running.
+/// unless the file GitHub serves matches the checksum the release lists and
+/// carries a signature Windows accepts from the same certificate as the copy
+/// already running.
 public static class Updates
 {
     public const string Repo = "shin2344234/ini-master";
@@ -102,6 +104,7 @@ public static class Updates
     public static async Task<string> DownloadAsync(ReleaseInfo release, HttpClient http, IProgress<double>? progress, CancellationToken cancel = default)
     {
         if (!IsGitHubUrl(release.ExeUrl)) throw new InvalidOperationException("The download is not on GitHub.");
+        if (release.Sha256 == null) throw new InvalidOperationException("The release lists no SHA-256 for the download.");
         var dir = Path.Combine(IniStore.AppDataFolder, "update");
         Directory.CreateDirectory(dir);
         var path = Path.Combine(dir, $"INIMaster-{release.Version}.exe");
@@ -126,9 +129,8 @@ public static class Updates
         var length = new FileInfo(path).Length;
         if (release.Size > 0 && length != release.Size)
             throw new InvalidOperationException($"The download is {length} bytes, not the {release.Size} the release lists.");
-        if (release.Sha256 != null)
+        await using (var stream = File.OpenRead(path))
         {
-            await using var stream = File.OpenRead(path);
             var hash = Convert.ToHexString(await SHA256.HashDataAsync(stream, cancel));
             if (!hash.Equals(release.Sha256, StringComparison.OrdinalIgnoreCase))
                 throw new InvalidOperationException("The download does not match the checksum the release lists.");
@@ -153,15 +155,103 @@ public static class Updates
         catch (UnauthorizedAccessException) { return null; }
     }
 
-    /// True when both files carry the same signing certificate. A copy of the
-    /// program that is not signed, such as a local build, never updates
-    /// itself, so nothing can replace it with a signed file from anywhere.
+    /// True when Windows accepts the file's Authenticode signature as covering
+    /// the bytes on disk. The certificate on its own proves nothing: an exe
+    /// edited after signing keeps the certificate that was stapled to it, and
+    /// only this check notices the hash no longer matches.
+    public static bool HasValidSignature(string path)
+    {
+        if (!File.Exists(path)) return false;
+        var action = GenericVerifyV2;
+        var filePath = Marshal.StringToCoTaskMemUni(path);
+        var filePtr = Marshal.AllocCoTaskMem(Marshal.SizeOf<WinTrustFileInfo>());
+        var dataPtr = Marshal.AllocCoTaskMem(Marshal.SizeOf<WinTrustData>());
+        try
+        {
+            Marshal.StructureToPtr(new WinTrustFileInfo
+            {
+                StructSize = (uint)Marshal.SizeOf<WinTrustFileInfo>(),
+                FilePath = filePath,
+            }, filePtr, false);
+            var data = new WinTrustData
+            {
+                StructSize = (uint)Marshal.SizeOf<WinTrustData>(),
+                UIChoice = WtdUiNone,
+                // Nothing here may wait on the network or put a window on screen.
+                RevocationChecks = WtdRevokeNone,
+                UnionChoice = WtdChoiceFile,
+                FileInfo = filePtr,
+                StateAction = WtdStateActionVerify,
+            };
+            Marshal.StructureToPtr(data, dataPtr, false);
+            var result = WinVerifyTrust(IntPtr.Zero, ref action, dataPtr);
+
+            data = Marshal.PtrToStructure<WinTrustData>(dataPtr);
+            data.StateAction = WtdStateActionClose;
+            Marshal.StructureToPtr(data, dataPtr, false);
+            WinVerifyTrust(IntPtr.Zero, ref action, dataPtr);
+            return result == 0;
+        }
+        catch (DllNotFoundException) { return false; }
+        catch (EntryPointNotFoundException) { return false; }
+        finally
+        {
+            Marshal.FreeCoTaskMem(filePath);
+            Marshal.FreeCoTaskMem(filePtr);
+            Marshal.FreeCoTaskMem(dataPtr);
+        }
+    }
+
+    /// True when both files carry a valid signature from the same certificate.
+    /// A copy of the program that is not signed, such as a local build, never
+    /// updates itself, so nothing can replace it with a signed file from
+    /// anywhere. Both signatures are checked against the bytes they cover, so
+    /// a build edited after signing fails even though it still carries the
+    /// certificate.
     public static bool SameSigner(string current, string downloaded)
     {
+        if (!HasValidSignature(current) || !HasValidSignature(downloaded)) return false;
         var a = Signer(current);
         var b = Signer(downloaded);
         return a != null && b != null && a.Value.Thumbprint == b.Value.Thumbprint &&
                string.Equals(a.Value.Subject, b.Value.Subject, StringComparison.Ordinal);
+    }
+
+    // WinVerifyTrust, the check Windows itself runs on a signed file.
+    private static readonly Guid GenericVerifyV2 = new("00AAC56B-CD44-11D0-8CC2-00C04FC295EE");
+    private const uint WtdUiNone = 2;
+    private const uint WtdRevokeNone = 0;
+    private const uint WtdChoiceFile = 1;
+    private const uint WtdStateActionVerify = 1;
+    private const uint WtdStateActionClose = 2;
+
+    [DllImport("wintrust.dll", ExactSpelling = true)]
+    private static extern int WinVerifyTrust(IntPtr window, ref Guid action, IntPtr data);
+
+    [StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+    private struct WinTrustFileInfo
+    {
+        public uint StructSize;
+        public IntPtr FilePath;
+        public IntPtr FileHandle;
+        public IntPtr KnownSubject;
+    }
+
+    [StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+    private struct WinTrustData
+    {
+        public uint StructSize;
+        public IntPtr PolicyCallbackData;
+        public IntPtr SipClientData;
+        public uint UIChoice;
+        public uint RevocationChecks;
+        public uint UnionChoice;
+        public IntPtr FileInfo;
+        public uint StateAction;
+        public IntPtr StateData;
+        public IntPtr UrlReference;
+        public uint ProvFlags;
+        public uint UIContext;
     }
 
     /// Renames the running exe aside, puts the new one in its place and starts
@@ -173,17 +263,33 @@ public static class Updates
         if (!SameSigner(target, downloaded))
             throw new InvalidOperationException("The download is not signed by the same certificate as this copy.");
         var old = target + ".old";
+        var staged = target + ".new";
         File.Delete(old);
+        File.Delete(staged);
+        // Copy the whole file next to the running one first. A copy that fails
+        // part way then leaves the running program where it is, and what
+        // follows is two renames inside one folder.
+        File.Copy(downloaded, staged);
         File.Move(target, old);
-        try { File.Copy(downloaded, target); }
+        try { File.Move(staged, target, overwrite: true); }
         catch
         {
-            // Put the working copy back rather than leaving nothing behind.
-            File.Move(old, target);
+            Restore(old, target);
             throw;
         }
         File.Delete(downloaded);
         if (restart) Process.Start(new ProcessStartInfo(target) { UseShellExecute = true });
+    }
+
+    /// Puts the copy that was renamed aside back where it was. An install that
+    /// failed may have left part of a file at the target, so this overwrites
+    /// rather than reporting that the name is taken. A failure here is
+    /// swallowed so the caller still sees what went wrong first.
+    public static void Restore(string movedAside, string target)
+    {
+        try { File.Move(movedAside, target, overwrite: true); }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
     }
 
     /// Removes what the last update left behind. Called at startup, when the
@@ -193,6 +299,7 @@ public static class Updates
         try
         {
             File.Delete((exePath ?? ExePath) + ".old");
+            File.Delete((exePath ?? ExePath) + ".new");
             var dir = Path.Combine(IniStore.AppDataFolder, "update");
             if (Directory.Exists(dir)) foreach (var f in Directory.EnumerateFiles(dir)) File.Delete(f);
         }

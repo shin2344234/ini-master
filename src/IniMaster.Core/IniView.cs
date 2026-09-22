@@ -32,19 +32,20 @@ public sealed class IniView
     public static IniView Build(IniTarget target, IniDocument? doc)
     {
         var view = new IniView();
+        var analysis = doc != null ? CommentAnalyzer.Analyze(doc) : null;
         // Metadata inside the plugin describes the whole ini, so the file's own
-        // comments are left out rather than shown underneath it. "comments" in
-        // the metadata forces either way. The ";@" directives stay, since they
-        // are instructions rather than prose.
-        view.UsesComments = target.Meta.UseComments ?? target.Meta.Source < MetaSource.Embedded;
-        IniAnalysis? analysis = null;
-        if (doc != null)
-        {
-            analysis = CommentAnalyzer.Analyze(doc);
+        // comments are left out rather than shown underneath it. "comments"
+        // forces either way, from the ini's own ";@mod comments=" line or,
+        // over the top of that, from the sidecar or the plugin. The ";@"
+        // directives stay whatever the answer, since they are instructions
+        // rather than prose.
+        var directives = analysis?.OnlyDirectives();
+        view.UsesComments = target.Meta.UseComments ?? directives?.UseComments
+            ?? target.Meta.Source < MetaSource.Embedded;
+        if (analysis != null)
             view.Meta.OverlayWith(view.UsesComments
                 ? analysis.Merged(MetaSource.IniComments, MetaSource.IniDirectives)
-                : analysis.OnlyDirectives());
-        }
+                : directives!);
         view.Meta.OverlayWith(target.Meta);
 
         var order = new List<string>();
@@ -72,6 +73,12 @@ public sealed class IniView
             };
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var items = new List<ViewItem>();
+            // With the file's own comments left out, an annotated default ini
+            // is the only place the headings and notes still exist, so they go
+            // in ahead of the key each one introduces.
+            Dictionary<string, List<ViewItem>>? leadIns = null;
+            var tail = new List<ViewItem>();
+            if (!view.UsesComments) leadIns = LeadIns(view.Meta.Layout.GetValueOrDefault(name), out tail);
 
             if (analysis != null && analysis.Layout.TryGetValue(name, out var layout))
             {
@@ -83,6 +90,7 @@ public sealed class IniView
                         case LayoutKind.Group: if (view.UsesComments && !string.IsNullOrWhiteSpace(item.Text)) items.Add(new ViewGroup(item.Text)); break;
                         case LayoutKind.Setting:
                             if (!seen.Add(item.Text)) break;
+                            if (leadIns != null && leadIns.TryGetValue(item.Text, out var ahead)) items.AddRange(ahead);
                             var km = sm?.Keys.GetValueOrDefault(item.Text) ?? new KeyMeta();
                             var value = doc!.Get(name, item.Text);
                             items.Add(new ViewSetting(SettingResolver.Resolve(name, item.Text, value, km), value));
@@ -95,6 +103,7 @@ public sealed class IniView
                 foreach (var key in sm.KeyOrder)
                 {
                     if (!seen.Add(key)) continue;
+                    if (leadIns != null && leadIns.TryGetValue(key, out var ahead)) items.AddRange(ahead);
                     var km = sm.Keys[key];
                     // A key only a sidecar or plugin knows about, with nothing
                     // but the comment layer behind it, is not worth a row.
@@ -104,11 +113,34 @@ public sealed class IniView
                 }
             }
 
+            items.AddRange(tail);
             section.Items.AddRange(Arrange(items));
             if (section.Items.Count > 0 || section.Description != null || doc?.SectionNames().Contains(name, StringComparer.OrdinalIgnoreCase) == true)
                 view.Sections.Add(section);
         }
         return view;
+    }
+
+    /// The headings and notes standing ahead of each key in a layout, plus
+    /// whatever trails the last one.
+    private static Dictionary<string, List<ViewItem>> LeadIns(List<LayoutItem>? layout, out List<ViewItem> tail)
+    {
+        var map = new Dictionary<string, List<ViewItem>>(StringComparer.OrdinalIgnoreCase);
+        var pending = new List<ViewItem>();
+        foreach (var item in layout ?? new List<LayoutItem>())
+        {
+            switch (item.Kind)
+            {
+                case LayoutKind.Note: pending.Add(new ViewNote(item.Text)); break;
+                case LayoutKind.Group: if (!string.IsNullOrWhiteSpace(item.Text)) pending.Add(new ViewGroup(item.Text)); break;
+                case LayoutKind.Setting:
+                    if (pending.Count > 0 && !map.ContainsKey(item.Text)) map[item.Text] = pending;
+                    pending = new List<ViewItem>();
+                    break;
+            }
+        }
+        tail = pending;
+        return map;
     }
 
     /// Applies metadata groups and order. Without either, the file's own

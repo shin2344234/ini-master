@@ -245,11 +245,16 @@ public sealed class MainViewModel : ObservableObject
             }
             if (quiet && string.Equals(_settings.SkippedVersion, release.Version.ToString(), StringComparison.Ordinal)) return;
 
-            // A copy that is not signed, or one in a folder this account cannot
-            // write, cannot replace itself. Those go to the download page.
-            var canInstall = Updates.Signer(Updates.ExePath) != null && Updates.CanReplaceExe();
+            // A copy whose signature Windows does not accept, or one in a folder
+            // this account cannot write, cannot replace itself. A release with
+            // no checksum leaves nothing to check the download against. Both go
+            // to the download page instead.
+            var canReplace = Updates.HasValidSignature(Updates.ExePath) && Updates.CanReplaceExe();
+            var canInstall = canReplace && release.Sha256 != null;
             var question = canInstall
                 ? Loc.T("INI Master {0} is out. You have {1}.\n\n{2}\n\nDownload and install it now?", release.Version.ToString(), current.ToString(), Summary(release.Notes))
+                : canReplace
+                ? Loc.T("INI Master {0} is out. You have {1}.\n\n{2}\n\nThe release lists no checksum, so open the download page?", release.Version.ToString(), current.ToString(), Summary(release.Notes))
                 : Loc.T("INI Master {0} is out. You have {1}.\n\n{2}\n\nThis copy cannot replace itself, so open the download page?", release.Version.ToString(), current.ToString(), Summary(release.Notes));
             if (MessageBox.Show(question, "INI Master", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
             {
