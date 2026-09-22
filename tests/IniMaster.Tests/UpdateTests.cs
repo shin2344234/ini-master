@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using IniMaster.Core;
 
 namespace IniMaster.Tests;
@@ -102,6 +103,19 @@ public class UpdateTests
                 "..", "..", "..", "..", "..", "dist", "INIMaster.exe");
             return File.Exists(path) ? Path.GetFullPath(path) : null;
         }
+    }
+
+    [Fact]
+    public void VersionComesFromTheExeNotThisLibrary()
+    {
+        // IniMaster.Core carries no version of its own, so reading it would
+        // say 1.0.0 and make every release look like an update.
+        Assert.Equal(new Version(1, 0, 0), typeof(Updates).Assembly.GetName().Version is { } v ? new Version(v.Major, v.Minor, v.Build) : null);
+        if (SignedExe is not { } exe) return;
+        var published = Updates.VersionOf(null, exe);
+        Assert.NotNull(published);
+        Assert.True(published > new Version(1, 0, 0), $"read {published} from the exe");
+        Assert.Equal(FileVersionInfo.GetVersionInfo(exe).FileVersion, $"{published}.0");
     }
 
     [Fact]

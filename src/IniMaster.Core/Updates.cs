@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Net.Http.Headers;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
@@ -21,14 +22,22 @@ public static class Updates
 
     private static string LatestApi => $"https://api.github.com/repos/{Repo}/releases/latest";
 
-    /// The running program's version, or null outside a real build.
-    public static Version? Current
+    /// The running program's version.
+    public static Version? Current => VersionOf(Assembly.GetEntryAssembly(), ExePath);
+
+    /// The exe's own version first. This library carries none of its own, so
+    /// reading the version here would report 1.0.0 and offer every release as
+    /// an update.
+    public static Version? VersionOf(Assembly? entry, string? exePath)
     {
-        get
+        if (exePath != null && File.Exists(exePath))
         {
-            var v = typeof(Updates).Assembly.GetName().Version;
-            return v == null ? null : new Version(v.Major, v.Minor, v.Build);
+            var info = FileVersionInfo.GetVersionInfo(exePath);
+            if (Version.TryParse(info.FileVersion, out var fromFile) && fromFile.Major + fromFile.Minor + fromFile.Build > 0)
+                return new Version(fromFile.Major, fromFile.Minor, fromFile.Build);
         }
+        var v = entry?.GetName().Version;
+        return v == null ? null : new Version(v.Major, v.Minor, v.Build);
     }
 
     public static string ExePath => Environment.ProcessPath ?? Path.Combine(AppContext.BaseDirectory, AssetName);
