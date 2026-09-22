@@ -27,13 +27,18 @@ About this mod	Über diese Mod
 Adding help for INI Master	Hilfe für INI Master hinzufügen
 All files	Alle Dateien
 Any other value. The list covers the ones the comments name.	Jeder andere Wert. Die Liste enthält die Werte, die in den Kommentaren stehen.
+Asking GitHub for the newest version...	GitHub wird nach der neuesten Version gefragt...
 Back to the default: {0}	Zurück zum Standardwert: {0}
+Check for updates	Nach Updates suchen
+Check when INI Master starts	Beim Start von INI Master suchen
 Checked every two seconds. Saving works either way; a running game only notices if the plugin rereads its ini.	Wird alle zwei Sekunden geprüft. Speichern funktioniert in beiden Fällen. Ein laufendes Spiel bemerkt die Änderung nur, wenn das Plugin seine INI neu einliest.
 Choose the Crimson Desert folder	Crimson-Desert-Ordner wählen
 Choose the Crimson Desert folder, the one with bin64 in it	Wähle den Crimson-Desert-Ordner, den mit bin64 darin
 Click, then press the key you want. Tab moves on.	Klicken und dann die gewünschte Taste drücken. Tab springt weiter.
+Could not check for updates: {0}	Die Suche nach Updates ist fehlgeschlagen: {0}
 Could not create {0}: {1}	{0} konnte nicht erstellt werden: {1}
 Could not find Crimson Desert. Use the Game folder button to pick it.	Crimson Desert wurde nicht gefunden. Wähle den Ordner mit der Schaltfläche Spielordner.
+Could not install the update: {0}	Das Update konnte nicht installiert werden: {0}
 Could not open the language folder: {0}	Der Sprachordner konnte nicht geöffnet werden: {0}
 Could not read the plugin folder: {0}	Der Plugin-Ordner konnte nicht gelesen werden: {0}
 Could not read {0}: {1}	{0} konnte nicht gelesen werden: {1}
@@ -47,6 +52,7 @@ Crimson Desert was not found. Choose its folder.	Crimson Desert wurde nicht gefu
 Default: {0}	Standard: {0}
 Described by: {0}	Quelle: {0}
 Discard text edits	Textänderungen verwerfen
+Downloading INI Master {0}, {1}%	INI Master {0} wird heruntergeladen, {1} %
 Edit every value as the text in the file, for when a control guessed wrong.	Jeden Wert als Text aus der Datei bearbeiten, falls ein Steuerelement falsch geraten hat.
 Embedded help	Eingebaute Hilfe
 Export metadata template...	Metadaten-Vorlage exportieren...
@@ -61,6 +67,10 @@ Help from {0}.	Hilfe aus {0}.
 How mod makers add help	Wie Mod-Autoren Hilfe hinzufügen
 INI Master metadata	INI-Master-Metadaten
 INI Master reads help for a setting from three places, and later ones win:\n\n1. The ini's own comments. The comment lines directly above a key are its help. Lines like ";   0  off" and ";   1  on" become choices, and "; ---- name" starts a group. A comment line that starts with ;@ sets things exactly, for example:\n   ;@ type=int min=0 max=100 unit=% label="Use cost"\n\n2. A file named after the ini with the .inimeta extension, next to it. It holds JSON, or an annotated copy of the default ini.\n\n3. The plugin itself. Add the same .inimeta file to the plugin's .rc file:\n   INIMETA INIMETA "MyMod.inimeta"\n\nAny text in the metadata can come in several languages. More > Export metadata template writes a starting .inimeta for the selected ini.	INI Master liest die Hilfe zu einer Einstellung aus drei Quellen, und spätere haben Vorrang:\n\n1. Die Kommentare der INI selbst. Die Kommentarzeilen direkt über einem Schlüssel sind seine Hilfe. Zeilen wie ";   0  off" und ";   1  on" werden zu Auswahlmöglichkeiten, und "; ---- name" beginnt eine Gruppe. Eine Kommentarzeile, die mit ;@ beginnt, legt Dinge genau fest, zum Beispiel:\n   ;@ type=int min=0 max=100 unit=% label="Use cost"\n\n2. Eine Datei neben der INI mit deren Namen und der Endung .inimeta. Sie enthält JSON oder eine kommentierte Kopie der Standard-INI.\n\n3. Das Plugin selbst. Füge dieselbe .inimeta-Datei in die .rc-Datei des Plugins ein:\n   INIMETA INIMETA "MyMod.inimeta"\n\nJeder Text in den Metadaten kann in mehreren Sprachen vorliegen. Mehr > Metadaten-Vorlage exportieren schreibt eine erste .inimeta für die gewählte INI.
+INI Master {0} is out. You have {1}.\n\n{2}\n\nDownload and install it now?	INI Master {0} ist erschienen. Du hast {1}.\n\n{2}\n\nJetzt herunterladen und installieren?
+INI Master {0} is out. You have {1}.\n\n{2}\n\nThis copy cannot replace itself, so open the download page?	INI Master {0} ist erschienen. Du hast {1}.\n\n{2}\n\nDiese Kopie kann sich nicht selbst ersetzen. Soll die Download-Seite geöffnet werden?
+INI Master {0} is the newest version.	INI Master {0} ist die neueste Version.
+Installing INI Master {0}...	INI Master {0} wird installiert...
 Language	Sprache
 Language: {0}.	Sprache: {0}.
 Language: {0}. {1} lines of the translation were skipped because their placeholders did not match the English.	Sprache: {0}. {1} Zeilen der Übersetzung wurden übersprungen, weil ihre Platzhalter nicht zum Englischen passten.
@@ -108,6 +118,7 @@ Show ini files without a plugin	INI-Dateien ohne Plugin anzeigen
 Skipped {0}: {1}	{0} übersprungen: {1}
 Some changes were not saved ({0}).\n\n{1}\n\nFix them, or choose No next time to discard them.	Einige Änderungen wurden nicht gespeichert ({0}).\n\n{1}\n\nKorrigiere sie oder wähle beim nächsten Mal Nein, um sie zu verwerfen.
 Something went wrong:\n\n{0}	Etwas ist schiefgelaufen:\n\n{0}
+Staying on {0}. More, Check for updates asks again.	Es bleibt bei {0}. Mehr, Nach Updates suchen fragt erneut.
 Stored as a hex virtual-key code.	Gespeichert als hexadezimaler Virtual-Key-Code.
 Stored as a key name. Ctrl, Shift and Alt combine with +.	Gespeichert als Tastenname. Ctrl, Shift und Alt werden mit + verbunden.
 Stored as a virtual-key code.	Gespeichert als Virtual-Key-Code.
@@ -120,6 +131,7 @@ The game is running, but this plugin reads its ini only at startup. Changes save
 The game is running. INI Master saves straight to the file; whether the game notices before a restart depends on the plugin, and this one does not say.	Das Spiel läuft. INI Master speichert direkt in die Datei. Ob das Spiel das vor einem Neustart bemerkt, hängt vom Plugin ab, und dieses gibt es nicht an.
 The game is running. If the plugin only reads its ini at startup, the change applies next launch.	Das Spiel läuft. Liest das Plugin seine INI nur beim Start, wirkt die Änderung beim nächsten Start.
 The highest allowed is {0}.	Der höchste erlaubte Wert ist {0}.
+The ini's own comments are not used.	Die eigenen Kommentare der INI werden nicht verwendet.
 The lowest allowed is {0}.	Der niedrigste erlaubte Wert ist {0}.
 The mod maker added help for INI Master.	Der Mod-Autor hat Hilfe für INI Master hinzugefügt.
 The plugin rereads it while the game runs.	Das Plugin liest sie neu ein, während das Spiel läuft.

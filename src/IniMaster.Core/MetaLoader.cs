@@ -110,6 +110,7 @@ public static class MetaLoader
         m.Game = Str(e, "game") ?? m.Game;
         m.Live = Bool(e, "live") ?? Bool(e, "hotReload") ?? m.Live;
         m.Ini = Str(e, "ini") ?? m.Ini;
+        m.UseComments = Bool(e, "comments") ?? Bool(e, "useComments") ?? m.UseComments;
     }
 
     private static void ReadSection(SectionMeta s, JsonElement e)

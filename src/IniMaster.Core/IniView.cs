@@ -23,16 +23,27 @@ public sealed class IniView
     public ModMeta Meta { get; } = new();
     public List<ViewSection> Sections { get; } = new();
 
+    /// False when the ini's own comments were left out, which is what a
+    /// plugin carrying its own metadata means unless it says otherwise.
+    public bool UsesComments { get; private set; } = true;
+
     public IEnumerable<ViewSetting> Settings => Sections.SelectMany(s => s.Items.OfType<ViewSetting>());
 
     public static IniView Build(IniTarget target, IniDocument? doc)
     {
         var view = new IniView();
+        // Metadata inside the plugin describes the whole ini, so the file's own
+        // comments are left out rather than shown underneath it. "comments" in
+        // the metadata forces either way. The ";@" directives stay, since they
+        // are instructions rather than prose.
+        view.UsesComments = target.Meta.UseComments ?? target.Meta.Source < MetaSource.Embedded;
         IniAnalysis? analysis = null;
         if (doc != null)
         {
             analysis = CommentAnalyzer.Analyze(doc);
-            view.Meta.OverlayWith(analysis.Merged(MetaSource.IniComments, MetaSource.IniDirectives));
+            view.Meta.OverlayWith(view.UsesComments
+                ? analysis.Merged(MetaSource.IniComments, MetaSource.IniDirectives)
+                : analysis.OnlyDirectives());
         }
         view.Meta.OverlayWith(target.Meta);
 
@@ -68,8 +79,8 @@ public sealed class IniView
                 {
                     switch (item.Kind)
                     {
-                        case LayoutKind.Note: items.Add(new ViewNote(item.Text)); break;
-                        case LayoutKind.Group: if (!string.IsNullOrWhiteSpace(item.Text)) items.Add(new ViewGroup(item.Text)); break;
+                        case LayoutKind.Note: if (view.UsesComments) items.Add(new ViewNote(item.Text)); break;
+                        case LayoutKind.Group: if (view.UsesComments && !string.IsNullOrWhiteSpace(item.Text)) items.Add(new ViewGroup(item.Text)); break;
                         case LayoutKind.Setting:
                             if (!seen.Add(item.Text)) break;
                             var km = sm?.Keys.GetValueOrDefault(item.Text) ?? new KeyMeta();

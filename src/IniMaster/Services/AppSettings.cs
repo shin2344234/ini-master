@@ -19,6 +19,11 @@ public sealed class AppSettings
     public bool Maximized { get; set; }
     /// A language tag such as "de", or null to follow Windows.
     public string? Language { get; set; }
+    /// Ask GitHub for a newer release when the app starts.
+    public bool CheckUpdates { get; set; } = true;
+    /// A version the person said no to, so the start up check stays quiet
+    /// about it. Checking from the menu ignores this.
+    public string? SkippedVersion { get; set; }
 
     private static string FilePath => Path.Combine(IniStore.AppDataFolder, "settings.json");
 

@@ -61,6 +61,7 @@ public sealed class IniFileViewModel : ObservableObject
     public bool Exists => File.Exists(Path);
     public ObservableCollection<SectionViewModel> Sections { get; } = new();
     public ModMeta Meta => _view?.Meta ?? Target.Meta;
+    public bool UsesComments => _view?.UsesComments ?? true;
     public bool? ModLive => Meta.Live;
     public bool GameRunning => _main.GameRunning;
     public RelayCommand SaveRawCommand { get; }

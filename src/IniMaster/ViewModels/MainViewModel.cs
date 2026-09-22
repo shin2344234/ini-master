@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Net.Http;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
@@ -48,6 +49,7 @@ public sealed class MainViewModel : ObservableObject
         GuideCommand = new RelayCommand(OpenGuide);
         ClearFilterCommand = new RelayCommand(() => Filter = "");
         OpenLanguageFolderCommand = new RelayCommand(OpenLanguageFolder);
+        CheckUpdatesCommand = new RelayCommand(() => _ = CheckForUpdates(quiet: false), () => !_updating);
     }
 
     public ObservableCollection<ModViewModel> Mods { get; } = new();
@@ -207,6 +209,98 @@ public sealed class MainViewModel : ObservableObject
 
     public RelayCommand OpenLanguageFolderCommand { get; }
 
+    // ------------------------------------------------------------ updates
+
+    private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(60) };
+    private bool _updating;
+
+    public RelayCommand CheckUpdatesCommand { get; }
+
+    public bool CheckUpdatesOnStart
+    {
+        get => _settings.CheckUpdates;
+        set { if (_settings.CheckUpdates == value) return; _settings.CheckUpdates = value; Raise(); }
+    }
+
+    /// Asks GitHub for the newest release. On start this says nothing unless
+    /// there is one to offer; from the menu it reports either way.
+    public async Task CheckForUpdates(bool quiet)
+    {
+        if (_updating || Updates.Current is not { } current) return;
+        _updating = true;
+        try
+        {
+            if (!quiet) Status = Loc.T("Asking GitHub for the newest version...");
+            ReleaseInfo? release;
+            try { release = await Updates.LatestAsync(Http); }
+            catch (Exception ex)
+            {
+                if (!quiet) Status = Loc.T("Could not check for updates: {0}", ex.Message);
+                return;
+            }
+            if (release == null || release.Version <= current)
+            {
+                if (!quiet) Status = Loc.T("INI Master {0} is the newest version.", current.ToString());
+                return;
+            }
+            if (quiet && string.Equals(_settings.SkippedVersion, release.Version.ToString(), StringComparison.Ordinal)) return;
+
+            // A copy that is not signed, or one in a folder this account cannot
+            // write, cannot replace itself. Those go to the download page.
+            var canInstall = Updates.Signer(Updates.ExePath) != null && Updates.CanReplaceExe();
+            var question = canInstall
+                ? Loc.T("INI Master {0} is out. You have {1}.\n\n{2}\n\nDownload and install it now?", release.Version.ToString(), current.ToString(), Summary(release.Notes))
+                : Loc.T("INI Master {0} is out. You have {1}.\n\n{2}\n\nThis copy cannot replace itself, so open the download page?", release.Version.ToString(), current.ToString(), Summary(release.Notes));
+            if (MessageBox.Show(question, "INI Master", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+            {
+                _settings.SkippedVersion = release.Version.ToString();
+                Status = Loc.T("Staying on {0}. More, Check for updates asks again.", current.ToString());
+                return;
+            }
+            _settings.SkippedVersion = null;
+            if (!canInstall) { OpenShell(release.PageUrl); return; }
+            if (!ConfirmDiscard()) return;
+            await Install(release);
+        }
+        finally { _updating = false; }
+    }
+
+    private async Task Install(ReleaseInfo release)
+    {
+        var percent = -1;
+        var progress = new Progress<double>(f =>
+        {
+            var p = (int)(f * 100);
+            if (p == percent) return;
+            percent = p;
+            Status = Loc.T("Downloading INI Master {0}, {1}%", release.Version.ToString(), p);
+        });
+        try
+        {
+            var file = await Updates.DownloadAsync(release, Http, progress);
+            Status = Loc.T("Installing INI Master {0}...", release.Version.ToString());
+            _settings.Save();
+            Updates.Apply(file);
+            Shutdown();
+            Application.Current.Shutdown();
+        }
+        catch (Exception ex)
+        {
+            Status = Loc.T("Could not install the update: {0}", ex.Message);
+            MessageBox.Show(Loc.T("Could not install the update: {0}", ex.Message) + "\n\n" + Updates.ReleasesPage,
+                "INI Master", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    /// The first paragraph of the release notes, short enough for a message box.
+    private static string Summary(string? notes)
+    {
+        var text = (notes ?? "").Replace("\r", "").Trim();
+        if (text.Length == 0) return "";
+        var para = text.Split("\n\n", StringSplitOptions.RemoveEmptyEntries)[0].Trim();
+        return para.Length > 400 ? para[..397].TrimEnd() + "..." : para;
+    }
+
     /// Picks up translation files added since the menu last opened.
     public void RefreshLanguageChoices() => Raise(nameof(LanguageChoices));
 
@@ -240,6 +334,8 @@ public sealed class MainViewModel : ObservableObject
         var root = GameLocator.Normalize(commandLinePath) ?? GameLocator.Normalize(_settings.GameRoot) ?? GameLocator.Find();
         GameRunning = GameLocator.IsGameRunning();
         _gameTimer.Start();
+        Updates.CleanUp();
+        if (_settings.CheckUpdates) _ = CheckForUpdates(quiet: true);
         if (root == null)
         {
             Status = Loc.T("Could not find Crimson Desert. Use the Game folder button to pick it.");

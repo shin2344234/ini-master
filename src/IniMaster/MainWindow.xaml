@@ -236,6 +236,10 @@
                                     </MenuItem.ItemContainerStyle>
                                 </MenuItem>
                                 <MenuItem Header="{l:T 'Translate INI Master...'}" Command="{Binding OpenLanguageFolderCommand}" />
+                                <Separator />
+                                <MenuItem Header="{l:T 'Check for updates'}" Command="{Binding CheckUpdatesCommand}" />
+                                <MenuItem Header="{l:T 'Check when INI Master starts'}" IsCheckable="True"
+                                          IsChecked="{Binding CheckUpdatesOnStart}" />
                             </ContextMenu>
                         </Button.ContextMenu>
                     </Button>

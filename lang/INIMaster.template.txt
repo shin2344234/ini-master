@@ -25,13 +25,18 @@ About this mod
 Adding help for INI Master	
 All files	
 Any other value. The list covers the ones the comments name.	
+Asking GitHub for the newest version...	
 Back to the default: {0}	
+Check for updates	
+Check when INI Master starts	
 Checked every two seconds. Saving works either way; a running game only notices if the plugin rereads its ini.	
 Choose the Crimson Desert folder	
 Choose the Crimson Desert folder, the one with bin64 in it	
 Click, then press the key you want. Tab moves on.	
+Could not check for updates: {0}	
 Could not create {0}: {1}	
 Could not find Crimson Desert. Use the Game folder button to pick it.	
+Could not install the update: {0}	
 Could not open the language folder: {0}	
 Could not read the plugin folder: {0}	
 Could not read {0}: {1}	
@@ -45,6 +50,7 @@ Crimson Desert was not found. Choose its folder.
 Default: {0}	
 Described by: {0}	
 Discard text edits	
+Downloading INI Master {0}, {1}%	
 Edit every value as the text in the file, for when a control guessed wrong.	
 Embedded help	
 Export metadata template...	
@@ -59,6 +65,10 @@ Help from {0}.
 How mod makers add help	
 INI Master metadata	
 INI Master reads help for a setting from three places, and later ones win:\n\n1. The ini's own comments. The comment lines directly above a key are its help. Lines like ";   0  off" and ";   1  on" become choices, and "; ---- name" starts a group. A comment line that starts with ;@ sets things exactly, for example:\n   ;@ type=int min=0 max=100 unit=% label="Use cost"\n\n2. A file named after the ini with the .inimeta extension, next to it. It holds JSON, or an annotated copy of the default ini.\n\n3. The plugin itself. Add the same .inimeta file to the plugin's .rc file:\n   INIMETA INIMETA "MyMod.inimeta"\n\nAny text in the metadata can come in several languages. More > Export metadata template writes a starting .inimeta for the selected ini.	
+INI Master {0} is out. You have {1}.\n\n{2}\n\nDownload and install it now?	
+INI Master {0} is out. You have {1}.\n\n{2}\n\nThis copy cannot replace itself, so open the download page?	
+INI Master {0} is the newest version.	
+Installing INI Master {0}...	
 Language	
 Language: {0}.	
 Language: {0}. {1} lines of the translation were skipped because their placeholders did not match the English.	
@@ -106,6 +116,7 @@ Show ini files without a plugin
 Skipped {0}: {1}	
 Some changes were not saved ({0}).\n\n{1}\n\nFix them, or choose No next time to discard them.	
 Something went wrong:\n\n{0}	
+Staying on {0}. More, Check for updates asks again.	
 Stored as a hex virtual-key code.	
 Stored as a key name. Ctrl, Shift and Alt combine with +.	
 Stored as a virtual-key code.	
@@ -118,6 +129,7 @@ The game is running, but this plugin reads its ini only at startup. Changes save
 The game is running. INI Master saves straight to the file; whether the game notices before a restart depends on the plugin, and this one does not say.	
 The game is running. If the plugin only reads its ini at startup, the change applies next launch.	
 The highest allowed is {0}.	
+The ini's own comments are not used.	
 The lowest allowed is {0}.	
 The mod maker added help for INI Master.	
 The plugin rereads it while the game runs.	

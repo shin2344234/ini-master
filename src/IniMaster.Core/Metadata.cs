@@ -140,6 +140,10 @@ public sealed class ModMeta
     /// The ini this metadata describes, as a file name. Null means the one
     /// with the plugin's own base name.
     public string? Ini { get; set; }
+    /// Whether to read the ini's own comments as help. Null means the default:
+    /// yes, unless the plugin carries embedded metadata, which then stands on
+    /// its own. A mod sets it with "comments" in its metadata.
+    public bool? UseComments { get; set; }
     /// Raw text of an annotated default ini, when the metadata came as one.
     /// Used to create a missing ini with every comment intact.
     public string? DefaultIniText { get; set; }
@@ -172,6 +176,7 @@ public sealed class ModMeta
         Game = o.Game ?? Game;
         Live = o.Live ?? Live;
         Ini = o.Ini ?? Ini;
+        UseComments = o.UseComments ?? UseComments;
         DefaultIniText = o.DefaultIniText ?? DefaultIniText;
         foreach (var name in o.SectionOrder) GetOrAddSection(name).OverlayWith(o.Sections[name]);
         if (o.Source > Source) Source = o.Source;

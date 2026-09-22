@@ -30,6 +30,14 @@ public sealed class IniAnalysis
         return list;
     }
 
+    /// The ";@" directives on their own, for a file whose plain comments are
+    /// ignored because the plugin ships its own metadata.
+    public ModMeta OnlyDirectives()
+    {
+        Stamp(Directives, MetaSource.IniDirectives);
+        return Directives;
+    }
+
     public ModMeta Merged(MetaSource commentsAs, MetaSource directivesAs)
     {
         var m = new ModMeta();
@@ -548,6 +556,7 @@ public static partial class CommentAnalyzer
                 case "game": m.Game = value; break;
                 case "live": case "hotreload": m.Live = Flag(value); break;
                 case "ini": m.Ini = value; break;
+                case "comments": case "usecomments": m.UseComments = Flag(value); break;
             }
         }
     }

@@ -158,6 +158,16 @@ The macro wraps the text in `@@INIMETA@@ ... @@/INIMETA@@` in a section of its o
 
 `sdk/example` is a plugin that does both, with `build.bat`.
 
+Metadata inside the plugin describes the whole ini, so INI Master stops reading that ini's comments as help: no comment help, no notes between settings, no `; ---- name` groups. Your metadata is what players see, and a key you leave out shows with its name and value alone. The `;@` lines in the ini still apply, since they are instructions rather than prose.
+
+To keep the comments as well, say so in the metadata:
+
+```jsonc
+"comments": true
+```
+
+The same field with `false` turns the comments off for a `.inimeta` file shipped next to the ini, which otherwise leaves them on.
+
 ## 5. Reloading while the game runs
 
 INI Master saves each change a moment after it's made (players can turn that off). It writes the new file beside the old one and renames it into place, so a plugin reading at that instant gets one whole file or the other. Each save starts from the file on disk and changes only the keys the player edited. A plugin that rewrites its own ini, as Master Looter's in-game menu does, keeps its changes, and INI Master reloads the page when it sees the file change.

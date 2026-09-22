@@ -65,6 +65,7 @@ public sealed class ModViewModel : ObservableObject
             var parts = new List<string>(f.Target.MetaSources);
             if (parts.Count == 0) parts.Add(Loc.T("the ini's own comments"));
             var text = Loc.T("Help from {0}.", string.Join(Loc.T(", then "), parts));
+            if (!f.UsesComments) text += " " + Loc.T("The ini's own comments are not used.");
             if (f.Target.MetaErrors.Count > 0) text += " " + Loc.T("Could not read: {0}", string.Join("; ", f.Target.MetaErrors));
             return text;
         }

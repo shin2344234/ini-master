@@ -14,6 +14,8 @@ Run `INIMaster.exe`. It finds the game through Steam's library list, Epic's mani
 - "Plain text values" swaps every control for the raw text, for when a guess about a setting's type is wrong. The File text tab edits the whole file.
 - The first save of each file in a session copies the old file to `%LOCALAPPDATA%\INIMaster\backups`. More, Open backups of this ini goes there.
 
+INI Master asks GitHub for a newer release when it starts, and asks you before it downloads anything. Saying no keeps it quiet about that version. More, Check for updates asks again at any time, and the same menu turns the start up check off. An update installs only if it is signed with the same certificate as the copy you are running.
+
 INI Master shows its own text in the Windows language when it has a translation for it, and English otherwise. More, Language picks another. Mods that ship help in several languages show it in the same one. [docs/TRANSLATING.md](docs/TRANSLATING.md) explains how to add a language.
 
 Text in any script reads and saves correctly, in UTF-8, UTF-16 or the Windows code page the file already uses. If a value holds a character the file's code page cannot store, INI Master refuses to save it and says which character, instead of writing a question mark.
