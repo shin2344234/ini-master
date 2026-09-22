@@ -8,7 +8,7 @@
     <Nullable>enable</Nullable>
     <RootNamespace>IniMaster</RootNamespace>
     <AssemblyName>INIMaster</AssemblyName>
-    <Version>1.2.3</Version>
+    <Version>1.2.4</Version>
     <Product>INI Master</Product>
     <Description>Edit Crimson Desert plugin ini files, including while the game runs.</Description>
     <ApplicationManifest>app.manifest</ApplicationManifest>

@@ -1,0 +1,180 @@
+# INI Master text for translation.
+#
+# Copy this file to INIMaster.<language>.txt, for example INIMaster.de.txt
+# or INIMaster.pt-br.txt, and write each translation after the tab at the
+# end of its line. \n is a line break. Lines starting with # are ignored.
+# A line left empty after the tab keeps the English.
+#
+# Keep every {0}, {1} and so on. Their order may change, but a line that
+# adds or drops one is skipped when the file loads, since it would show
+# the wrong values.
+#
+# Put the finished file in %LOCALAPPDATA%\INIMaster\lang, or in a lang
+# folder next to INIMaster.exe, then pick the language under More >
+# Language. docs/TRANSLATING.md has the rest.
+ (bundled with INI Master)	 （随 INI Master 一同提供）
+(empty)	（空）
+(not in the file yet)	（文件中尚不存在）
+, then 	，然后 
+1 change	1 项更改
+1 other ini file	1 个其他 ini 文件
+1 plugin	1 个插件
+1 unsaved change	1 项未保存的更改
+@ directives in the ini	ini 中的 @ 指令
+About this mod	关于此 Mod
+Adding help for INI Master	为 INI Master 添加帮助
+All files	所有文件
+Any other value. The list covers the ones the comments name.	也允许其他任意值。列表涵盖注释中提到的值。
+Back to the default: {0}	恢复默认值：{0}
+Checked every two seconds. Saving works either way; a running game only notices if the plugin rereads its ini.	每两秒检查一次。无论哪种情况都能保存；游戏运行中只有插件重新读取其 ini 时才会检测到更改。
+Choose the Crimson Desert folder	选择 Crimson Desert 文件夹
+Choose the Crimson Desert folder, the one with bin64 in it	选择 Crimson Desert 文件夹，即其中包含 bin64 的文件夹
+Click, then press the key you want. Tab moves on.	单击，然后按下所需按键。按 Tab 移到下一项。
+Could not create {0}: {1}	无法创建 {0}：{1}
+Could not find Crimson Desert. Use the Game folder button to pick it.	找不到 Crimson Desert。请使用“游戏文件夹”按钮选择其文件夹。
+Could not open the language folder: {0}	无法打开语言文件夹：{0}
+Could not read the plugin folder: {0}	无法读取插件文件夹：{0}
+Could not read {0}: {1}	无法读取 {0}：{1}
+Could not read: {0}	无法读取：{0}
+Could not save {0}: {1}	无法保存 {0}：{1}
+Could not write the template: {0}	无法写入模板：{0}
+Create it	创建
+Created {0} from the defaults the plugin describes.	已根据插件描述的默认值创建 {0}。
+Crimson Desert started. Changes still save straight to the ini files.	Crimson Desert 已启动。更改仍会直接保存到 ini 文件。
+Crimson Desert was not found. Choose its folder.	找不到 Crimson Desert。请选择其文件夹。
+Default: {0}	默认值：{0}
+Described by: {0}	描述来源：{0}
+Discard text edits	放弃文本编辑
+Edit every value as the text in the file, for when a control guessed wrong.	将每个值按文件中的文本直接编辑，适用于控件类型判断错误的情况。
+Embedded help	嵌入式帮助
+Export metadata template...	导出元数据模板...
+File text	文件文本
+Find a mod	查找 Mod
+Find a setting (Ctrl+F)	查找设置 (Ctrl+F)
+Found {0} and {1} in {2}.	在 {2} 中找到 {0} 和 {1}。
+Game folder	游戏文件夹
+Game not running	游戏未运行
+Game running	游戏正在运行
+Help from {0}.	帮助来源：{0}。
+How mod makers add help	Mod 作者如何添加帮助
+INI Master metadata	INI Master 元数据
+INI Master reads help for a setting from three places, and later ones win:\n\n1. The ini's own comments. The comment lines directly above a key are its help. Lines like ";   0  off" and ";   1  on" become choices, and "; ---- name" starts a group. A comment line that starts with ;@ sets things exactly, for example:\n   ;@ type=int min=0 max=100 unit=% label="Use cost"\n\n2. A file named after the ini with the .inimeta extension, next to it. It holds JSON, or an annotated copy of the default ini.\n\n3. The plugin itself. Add the same .inimeta file to the plugin's .rc file:\n   INIMETA INIMETA "MyMod.inimeta"\n\nAny text in the metadata can come in several languages. More > Export metadata template writes a starting .inimeta for the selected ini.	INI Master 从三个位置读取设置的帮助，后面的来源优先：\n\n1. ini 自身的注释。键正上方的注释行就是该键的帮助。像 ";   0  off" 和 ";   1  on" 这样的行会变成选项，而 "; ---- name" 会开始一个分组。以 ;@ 开头的注释行可精确设置各项，例如：\n   ;@ type=int min=0 max=100 unit=% label="Use cost"\n\n2. 与 ini 同名、位于其旁边且扩展名为 .inimeta 的文件。它包含 JSON，或带注释的默认 ini 副本。\n\n3. 插件本身。将同一个 .inimeta 文件添加到插件的 .rc 文件中：\n   INIMETA INIMETA "MyMod.inimeta"\n\n元数据中的任何文本都可以提供多种语言版本。“更多 > 导出元数据模板”会为当前选中的 ini 写出一个初始 .inimeta 文件。
+Language	语言
+Language: {0}.	语言：{0}。
+Language: {0}. {1} lines of the translation were skipped because their placeholders did not match the English.	语言：{0}。翻译中有 {1} 行因占位符与英文不匹配而被跳过。
+Loader, upscaler and overlay settings such as winmm.ini or OptiScaler.ini.	加载器、画质缩放器和叠加层设置，例如 winmm.ini 或 OptiScaler.ini。
+Mod page	Mod 页面
+Mods	Mods
+More	更多
+Needs a number.	需要数字。
+Needs a whole number.	需要整数。
+Next launch	下次启动
+No key	无按键
+No mod selected	未选择 Mod
+No plugin with this name. The ini may belong to a DLL mod or an overlay.	没有此名称的插件。该 ini 可能属于 DLL Mod 或叠加层。
+No translation for {0} yet, so the app stays in English. Mod help still follows the language where the mod has it.	暂无 {0} 翻译，因此应用仍使用英语。若 Mod 提供相应语言的帮助，Mod 帮助仍会使用该语言。
+Nobody wrote help for this one yet.	还没有人为此项编写帮助。
+Not one of the listed choices.	不是列出的选项之一。
+Not saved. {0}: {1}	未保存。{0}：{1}
+Nothing to save. The text matches the file.	无需保存。文本与文件内容一致。
+Off	关闭
+On	开启
+Open backups of this ini	打开此 ini 的备份
+Open the plugin folder	打开插件文件夹
+Open this ini in the default editor	在默认编辑器中打开此 ini
+Other values are allowed too.	也允许其他值。
+Pick a plugin on the left. If the list is empty, point INI Master at the Crimson Desert folder with the Game folder button.	请在左侧选择一个插件。如果列表为空，请使用“游戏文件夹”按钮将 INI Master 指向 Crimson Desert 文件夹。
+Plain text values	纯文本值
+Plugin: {0}	插件：{0}
+Press a key...	按下一个按键...
+Range: {0} to {1}	范围：{0} 到 {1}
+Range: {0} to {1}, read from the comments and not enforced	范围：{0} 到 {1}，从注释中读取但不强制限制
+Rescan plugins	重新扫描插件
+Same as Windows: {0}	与 Windows 相同：{0}
+Save	保存
+Save a metadata template for this ini	保存此 ini 的元数据模板
+Save all files	保存所有文件
+Save as I edit	编辑时自动保存
+Save text	保存文本
+Save this ini (Ctrl+S). Ctrl+Shift+S saves every file with changes.	保存此 ini (Ctrl+S)。Ctrl+Shift+S 保存所有有更改的文件。
+Saved {0} as text.	已将 {0} 保存为文本。
+Saved {0} to {1} at {2}.	已在 {2} 将 {0} 保存到 {1}。
+Settings	设置
+Settings the mod maker marked as advanced.	Mod 作者标记为高级的设置。
+Show advanced	显示高级设置
+Show ini files without a plugin	显示没有插件的 ini 文件
+Skipped {0}: {1}	已跳过 {0}：{1}
+Some changes were not saved ({0}).\n\n{1}\n\nFix them, or choose No next time to discard them.	有些更改未保存（{0}）。\n\n{1}\n\n请修正这些问题，或下次选择“否”以放弃这些更改。
+Something went wrong:\n\n{0}	出现问题：\n\n{0}
+Stored as a hex virtual-key code.	以十六进制虚拟键代码存储。
+Stored as a key name. Ctrl, Shift and Alt combine with +.	以按键名称存储。Ctrl、Shift 和 Alt 用 + 组合。
+Stored as a virtual-key code.	以虚拟键代码存储。
+Takes effect the next time the game starts.	下次启动游戏时生效。
+The comments mention {0} to {1}.	注释中提到的范围是 {0} 到 {1}。
+The file does not have this key. Changing it adds the key.	文件中没有此键。修改它会将该键添加到文件中。
+The file exactly as it is on disk. Edits here are saved as typed, comments and all.	这里显示磁盘上文件的原始内容。在此处的编辑会按输入内容原样保存，包括注释。
+The game is running and this plugin rereads its ini, so saved changes apply in game within a moment.	游戏正在运行，并且此插件会重新读取其 ini，因此已保存的更改会很快在游戏中生效。
+The game is running, but this plugin reads its ini only at startup. Changes save now and apply the next time the game starts.	游戏正在运行，但此插件只在启动时读取其 ini。更改会立即保存，并在下次启动游戏时生效。
+The game is running. INI Master saves straight to the file; whether the game notices before a restart depends on the plugin, and this one does not say.	游戏正在运行。INI Master 会直接保存到文件；游戏能否在重启前检测到更改取决于插件，而此插件未说明。
+The game is running. If the plugin only reads its ini at startup, the change applies next launch.	游戏正在运行。如果插件只在启动时读取其 ini，则更改会在下次启动时生效。
+The highest allowed is {0}.	允许的最大值为 {0}。
+The lowest allowed is {0}.	允许的最小值为 {0}。
+The mod maker added help for INI Master.	Mod 作者已为 INI Master 添加帮助。
+The plugin rereads it while the game runs.	插件会在游戏运行时重新读取它。
+The plugin rereads this while the game runs.	插件会在游戏运行时重新读取此项。
+There are unsaved changes ({0}). Save them first?	有未保存的更改（{0}）。要先保存吗？
+This plugin reads its ini at startup, so restart the game to apply it.	此插件在启动时读取其 ini，因此请重启游戏以应用更改。
+This plugin reads the setting at startup. Saving works now; restart the game to see it.	此插件在启动时读取该设置。现在可以保存；请重启游戏以查看效果。
+Translate INI Master...	翻译 INI Master...
+Type: {0}	类型：{0}
+Type: {0}, guessed from the value and comments	类型：{0}，根据值和注释推测
+Undo this change (back to the value in the file)	撤销此更改（恢复为文件中的值）
+Undo unsaved changes in this file	撤销此文件中未保存的更改
+Unsaved changes	未保存的更改
+Windows refused to write {0}. If the game is under Program Files, run INI Master as administrator, or clear the file's read-only flag.	Windows 拒绝写入 {0}。如果游戏位于 Program Files 下，请以管理员身份运行 INI Master，或取消文件的只读属性。
+Write each change to the ini a moment after you make it, so a plugin that rereads its ini picks it up while you play.	每次更改后稍等片刻便将其写入 ini，这样会重新读取 ini 的插件就能在你游玩时检测到更改。
+Writes {0} for on and {1} for off.	开启时写入 {0}，关闭时写入 {1}。
+Wrote {0}. Edit it, then ship it next to the ini or embed it in the plugin.	已写入 {0}。编辑它，然后将其与 ini 一同发布，或嵌入插件中。
+an .inimeta file	一个 .inimeta 文件
+any	任意
+by {0}	由 {0}
+choice	选项
+embedded marker	嵌入式标记
+key	按键
+no ini	无 ini
+not in file	不在文件中
+nothing, the type is a guess	无，类型为推测结果
+number	数字
+on or off	开启或关闭
+resource {0}	资源 {0}
+text	文本
+the ini's comments	ini 的注释
+the ini's own comments	ini 自身的注释
+the plugin's embedded metadata	插件的嵌入式元数据
+whole number	整数
+{0} (missing)	{0}（缺失）
+{0} changed on disk and was reloaded.	磁盘上的 {0} 已更改并重新加载。
+{0} changes	{0} 项更改
+{0} does not exist yet. Most plugins write their ini the first time the game runs with them.	{0} 尚不存在。大多数插件会在游戏首次加载它们运行时写入自己的 ini。
+{0} does not exist yet. The plugin may write it on its first run, or you can create it now from the defaults it describes.	{0} 尚不存在。插件可能会在首次运行时写入它，也可以现在根据其描述的默认值创建。
+{0} is not in that folder or in a bin64 folder inside it.	该文件夹或其内部的 bin64 文件夹中没有 {0}。
+{0} is saved as {1}, which has no "{2}".	{0} 使用 {1} 编码保存，而该编码不包含“{2}”。
+{0} is saved as {1}, which has no "{2}". Use other characters, or convert the file to UTF-8 in a text editor.	{0} 使用 {1} 编码保存，而该编码不包含“{2}”。请使用其他字符，或在文本编辑器中将文件转换为 UTF-8。
+{0} other ini files	{0} 个其他 ini 文件
+{0} plugins	{0} 个插件
+{0} unsaved changes	{0} 项未保存的更改
+{0}, no plugin	{0}，无插件
+
+# 以下是 1.2.3 新增的文字，由机器翻译，欢迎指正。
+Asking GitHub for the newest version...	正在向 GitHub 查询最新版本...
+Check for updates	检查更新
+Check when INI Master starts	启动 INI Master 时检查
+Could not check for updates: {0}	无法检查更新：{0}
+Could not install the update: {0}	无法安装更新：{0}
+Downloading INI Master {0}, {1}%	正在下载 INI Master {0}，{1}%
+INI Master {0} is out. You have {1}.\n\n{2}\n\nDownload and install it now?	INI Master {0} 已发布，你当前使用的是 {1}。\n\n{2}\n\n要立即下载并安装吗？
+INI Master {0} is out. You have {1}.\n\n{2}\n\nThis copy cannot replace itself, so open the download page?	INI Master {0} 已发布，你当前使用的是 {1}。\n\n{2}\n\n这个副本无法自行更新，要打开下载页面吗？
+INI Master {0} is the newest version.	INI Master {0} 已是最新版本。
+Installing INI Master {0}...	正在安装 INI Master {0}...
+Staying on {0}. More, Check for updates asks again.	保持 {0}。“更多”中的“检查更新”会再次询问。
+The ini's own comments are not used.	不使用 ini 自身的注释。

@@ -135,7 +135,22 @@ public partial class LocalizationTests
             Assert.Equal("built in", Loc.Use("fr-CA", Array.Empty<string>()));
             Assert.Equal("Enregistrer", Loc.T("Save"));
             Assert.Equal("Par défaut : 5", Loc.T("Default: {0}", "5"));
-            Assert.Equal(new[] { "en", "de", "fr" }, Loc.Available(Array.Empty<string>()));
+            Assert.Equal(new[] { "en", "de", "fr", "zh-cn", "zh-tw" }, Loc.Available(Array.Empty<string>()));
+
+            Assert.Equal("built in", Loc.Use("zh-TW", Array.Empty<string>()));
+            Assert.Equal("儲存", Loc.T("Save"));
+            Assert.Equal("built in", Loc.Use("zh-CN", Array.Empty<string>()));
+            Assert.Equal("保存", Loc.T("Save"));
+
+            // Hong Kong and Macau have no file of their own. Both read
+            // Traditional, so they take zh-TW rather than falling to English.
+            Assert.Equal("built in", Loc.Use("zh-HK", Array.Empty<string>()));
+            Assert.Equal("儲存", Loc.T("Save"));
+            Assert.Equal("built in", Loc.Use("zh-MO", Array.Empty<string>()));
+            Assert.Equal("儲存", Loc.T("Save"));
+            // Singapore writes Simplified.
+            Assert.Equal("built in", Loc.Use("zh-SG", Array.Empty<string>()));
+            Assert.Equal("保存", Loc.T("Save"));
         }
         finally { Loc.Use("en", Array.Empty<string>()); }
     }
@@ -191,6 +206,24 @@ public partial class LocalizationTests
             Directory.Delete(dir, true);
         }
     }
+
+    [Theory]
+    [InlineData("pt-BR", new[] { "pt-br", "pt" })]
+    [InlineData("zh-HK", new[] { "zh-hk", "zh-hant", "zh" })]
+    [InlineData("de", new[] { "de" })]
+    [InlineData("xx-YY", new[] { "xx-yy", "xx" })]
+    public void ChainGoesThroughTheLanguageParents(string tag, string[] expected) =>
+        Assert.Equal(expected, Loc.ChainFor(tag));
+
+    [Theory]
+    [InlineData("zh-HK", new[] { "zh-cn", "zh-tw" }, new[] { "zh-tw" })]
+    [InlineData("zh-SG", new[] { "zh-cn", "zh-tw" }, new[] { "zh-cn" })]
+    [InlineData("zh-TW", new[] { "zh-cn", "zh-tw" }, new string[0])]
+    // "de" is already in de-AT's chain, so naming it again costs nothing.
+    [InlineData("de-AT", new[] { "de", "fr" }, new[] { "de" })]
+    [InlineData("es-MX", new[] { "es-es" }, new[] { "es-es" })]
+    public void RelativesShareTheWritingSystem(string tag, string[] available, string[] expected) =>
+        Assert.Equal(expected, Loc.RelativesOf(tag, available.Append("en")));
 
     [Fact]
     public void PluralUsesTheCount()

@@ -53,12 +53,55 @@ public static partial class Loc
 
     public static string Normalize(string? tag) => (tag ?? "").Trim().Replace('_', '-').ToLowerInvariant();
 
+    /// The language, then what Windows considers its parents, so zh-HK looks
+    /// for zh-hant and then zh, and pt-BR for pt.
     public static IReadOnlyList<string> ChainFor(string tag)
     {
         tag = Normalize(tag);
         if (tag.Length == 0) return new[] { "en" };
+        var chain = new List<string> { tag };
+        try
+        {
+            for (var c = CultureInfo.GetCultureInfo(tag).Parent; c != null && c.Name.Length > 0; c = c.Parent)
+            {
+                var name = Normalize(c.Name);
+                if (!chain.Contains(name)) chain.Add(name);
+            }
+        }
+        catch (CultureNotFoundException) { }
         var dash = tag.IndexOf('-');
-        return dash > 0 ? new[] { tag, tag[..dash] } : new[] { tag };
+        if (dash > 0 && !chain.Contains(tag[..dash])) chain.Add(tag[..dash]);
+        return chain;
+    }
+
+    /// The writing system Windows gives a language, such as zh-hant for
+    /// zh-TW. Null when it has only one.
+    private static string? Script(string tag)
+    {
+        try
+        {
+            for (var c = CultureInfo.GetCultureInfo(tag).Parent; c != null && c.Name.Length > 0; c = c.Parent)
+                if (c.Name.Contains('-')) return Normalize(c.Name);
+        }
+        catch (CultureNotFoundException) { }
+        return null;
+    }
+
+    /// Translations for the same language in another region, closest first:
+    /// zh-HK takes the zh-TW file because both are Traditional, and never the
+    /// Simplified one.
+    public static List<string> RelativesOf(string tag, IEnumerable<string> available)
+    {
+        tag = Normalize(tag);
+        var baseTag = tag.Split('-')[0];
+        if (baseTag.Length == 0) return new List<string>();
+        var script = Script(tag);
+        var cousins = available.Select(Normalize)
+            .Where(a => a != tag && a != "en" && a.Split('-')[0] == baseTag)
+            .ToList();
+        var sameScript = cousins.Where(a => Script(a) == script).ToList();
+        // With no script to go by, any region of the language beats English.
+        return sameScript.Count > 0 ? sameScript : script == null ? cousins : new List<string>();
     }
 
     /// Switches to a language. The first of its chain with a table wins; with
@@ -69,10 +112,13 @@ public static partial class Loc
         Dictionary<string, string>? table = null;
         string? source = null;
         var ignored = 0;
-        foreach (var lang in chain)
+        var folderList = folders as IList<string> ?? folders.ToList();
+        // The language and its parents first, then another region of the same
+        // language, which still reads better than English.
+        foreach (var lang in chain.Concat(RelativesOf(tag, Available(folderList))))
         {
             if (lang == "en") break;
-            foreach (var folder in folders)
+            foreach (var folder in folderList)
             {
                 var path = Path.Combine(folder, FilePrefix + lang + FileSuffix);
                 if (!File.Exists(path)) continue;
