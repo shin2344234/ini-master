@@ -6,7 +6,7 @@ It works while the game is running. Changes save to the ini a moment after you m
 
 ## Using it
 
-Run `INIMaster.exe`. It finds the game through Steam's library list, Epic's manifests or the usual folders. If it misses, press Game folder and pick the Crimson Desert folder or `bin64`.
+Download `INIMaster-<version>.zip` from [Nexus Mods](https://www.nexusmods.com/crimsondesert/mods/3578) or the [GitHub releases](https://github.com/shin2344234/ini-master/releases), unzip it anywhere and run `INIMaster.exe`. It finds the game through Steam's library list, Epic's manifests or the usual folders. If it misses, press Game folder and pick the Crimson Desert folder or `bin64`.
 
 - Pick a mod on the left. Hover a setting for its full help, or click it to pin the help at the bottom.
 - "Save as I edit" writes each change straight away. Turn it off to collect changes and save with Ctrl+S (Ctrl+Shift+S saves every file).
