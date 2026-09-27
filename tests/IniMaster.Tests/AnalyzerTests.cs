@@ -190,6 +190,47 @@ public class AnalyzerTests
     }
 
     [Fact]
+    public void BareWordsAfterAQuotedValueAreFlags()
+    {
+        var (words, pairs) = CommentAnalyzer.ParseDirective("@ type=bool true=1 false=0 label=\"Research probe\" advanced");
+        Assert.Equal(new[] { "advanced" }, words);
+        Assert.Equal("Research probe", pairs.Single(p => p.Key == "label").Value);
+
+        (words, pairs) = CommentAnalyzer.ParseDirective("@ label=\"A b\" hidden readonly unit=\"m s\" live");
+        Assert.Equal(new[] { "hidden", "readonly", "live" }, words);
+        Assert.Equal("A b", pairs.Single(p => p.Key == "label").Value);
+        Assert.Equal("m s", pairs.Single(p => p.Key == "unit").Value);
+
+        // An unquoted value still runs to the next " name=", words and all.
+        (words, pairs) = CommentAnalyzer.ParseDirective("@ label=Use cost advanced unit=%");
+        Assert.Empty(words);
+        Assert.Equal("Use cost advanced", pairs.Single(p => p.Key == "label").Value);
+        Assert.Equal("%", pairs.Single(p => p.Key == "unit").Value);
+    }
+
+    [Fact]
+    public void BareWordsAfterATaggedQuotedValueAreFlags()
+    {
+        // Only one variant, so it wins whatever the current language is.
+        var (words, pairs) = CommentAnalyzer.ParseDirective("@ int label.de=\"Tempo\" advanced");
+        Assert.Equal(new[] { "int", "advanced" }, words);
+        Assert.Equal("Tempo", pairs.Single(p => p.Key == "label").Value);
+    }
+
+    [Fact]
+    public void TrailingFlagReachesTheSetting()
+    {
+        var v = View("""
+            [settings]
+            ;@ type=bool true=1 false=0 label="Research probe" advanced
+            Probe=0
+            """);
+        var probe = S(v, "Probe");
+        Assert.Equal("Research probe", probe.Label);
+        Assert.True(probe.Advanced);
+    }
+
+    [Fact]
     public void JsonMetadataWinsOverComments()
     {
         var json = """

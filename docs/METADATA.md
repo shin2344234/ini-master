@@ -62,7 +62,7 @@ Mode=1
 HookDX12=1
 ```
 
-A value without quotes runs until the next ` name=`, so `label=Use cost unit=%` works. Bare words set flags: `advanced`, `hidden`, `readonly`, `live`, `restart`, `custom`, or a type name.
+A value without quotes runs until the next ` name=`, so `label=Use cost unit=%` works. Bare words set flags: `advanced`, `hidden`, `readonly`, `live`, `restart`, `custom`, or a type name. They can go anywhere on the line except inside an unquoted value, so `label="Research probe" advanced` sets the flag while `label=Research probe advanced` puts the word in the label.
 
 Above a section header, `;@` lines describe the section: `label`, `description`, `hidden`, `advanced`, `order`. Anywhere, `;@mod` describes the mod:
 

@@ -416,7 +416,8 @@ public static partial class CommentAnalyzer
     public static bool IsDirective(string body) => body.StartsWith('@');
 
     /// Splits "@ type=int min=0 label=Use cost" into scope words and pairs.
-    /// An unquoted value runs until the next " name=".
+    /// An unquoted value runs until the next " name="; a quoted one ends at
+    /// its closing quote, so words after it are scope words too.
     public static (List<string> Words, List<KeyValuePair<string, string>> Pairs) ParseDirective(string body)
     {
         var s = body.TrimStart('@').Trim();
@@ -424,14 +425,18 @@ public static partial class CommentAnalyzer
         var pairs = new List<KeyValuePair<string, string>>();
         var first = DirectivePair().Match(s);
         var head = first.Success ? s[..first.Index] : s;
-        words.AddRange(head.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(w => w.ToLowerInvariant()));
+        AddWords(words, head);
         for (var m = first; m.Success; m = m.NextMatch())
         {
             var val = m.Groups["q"].Success ? m.Groups["q"].Value : m.Groups["v"].Value.Trim();
             pairs.Add(new(m.Groups["k"].Value.ToLowerInvariant(), val.Replace("\\n", "\n")));
+            AddWords(words, m.Groups["w"].Value);
         }
         return (words, Loc.PickPairs(pairs));
     }
+
+    private static void AddWords(List<string> words, string text) =>
+        words.AddRange(text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Select(w => w.ToLowerInvariant()));
 
     private static void ApplyFloatingDirective(IniAnalysis a, string section, string body)
     {
@@ -604,7 +609,8 @@ public static partial class CommentAnalyzer
     [GeneratedRegex(@"(?<![\w.\-])(?<v>-?\d+)\s+(?<l>[A-Za-z][A-Za-z ]*?)\s*(?=,|\(|$|\.)")]
     private static partial Regex SectionPair();
 
-    // A name may end in a language tag, as in label.de="Kosten".
-    [GeneratedRegex(@"(?<![\w.])(?<k>[A-Za-z_]\w*(?:\.[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{2,8})?)?)\s*=\s*(?:""(?<q>[^""]*)""|(?<v>.*?))(?=\s+[A-Za-z_]\w*(?:\.[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{2,8})?)?\s*=|\s*$)")]
+    // A name may end in a language tag, as in label.de="Kosten". A quoted
+    // value ends at its closing quote, and bare words after it land in "w".
+    [GeneratedRegex(@"(?<![\w.])(?<k>[A-Za-z_]\w*(?:\.[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{2,8})?)?)\s*=\s*(?:""(?<q>[^""]*)""(?<w>(?:\s+[^\s=""]+)*)|(?<v>.*?))(?=\s+[A-Za-z_]\w*(?:\.[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{2,8})?)?\s*=|\s*$)")]
     private static partial Regex DirectivePair();
 }
