@@ -94,8 +94,12 @@
 
             <DataTemplate x:Key="KeyEditor" DataType="{x:Type vm:SettingViewModel}">
                 <StackPanel Orientation="Horizontal">
-                    <c:KeyCaptureBox Width="220" Value="{Binding Value}" Format="{Binding KeyFormat}" />
+                    <c:KeyCaptureBox Width="220" Value="{Binding Value}" Format="{Binding KeyFormat}" NoneValue="{Binding KeyNone}" />
                     <Button Style="{StaticResource IconButton}" Content="&#xE711;" Command="{Binding ClearKeyCommand}" ToolTip="{l:T 'No key'}" />
+                    <!-- Values the comments name besides a key, such as OptiScaler's auto. -->
+                    <ComboBox Width="140" Margin="6,0,0,0" ItemsSource="{Binding Options}" SelectedItem="{Binding SelectedOption}" DisplayMemberPath="Display"
+                              Visibility="{Binding HasOptions, Converter={StaticResource Visible}}"
+                              ToolTip="{l:T 'Other values the comments name, besides a key.'}" />
                 </StackPanel>
             </DataTemplate>
         </ResourceDictionary>

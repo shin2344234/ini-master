@@ -37,7 +37,7 @@ public sealed class SettingViewModel : ItemViewModel
         _value = fileValue ?? setting.Default ?? "";
         ResetCommand = new RelayCommand(() => Value = R.Default ?? "", () => CanReset);
         RevertCommand = new RelayCommand(() => Value = SavedValue, () => IsDirty);
-        ClearKeyCommand = new RelayCommand(() => Value = KeyNames.NoneValue(R.KeyFormat));
+        ClearKeyCommand = new RelayCommand(() => Value = R.KeyNone ?? KeyNames.NoneValue(R.KeyFormat));
     }
 
     public ResolvedSetting R { get; }
@@ -54,6 +54,7 @@ public sealed class SettingViewModel : ItemViewModel
     public bool ReadOnly => R.ReadOnly;
     public bool AllowCustom => R.AllowCustom;
     public IReadOnlyList<OptionMeta> Options => R.Options;
+    public bool HasOptions => R.Options.Count > 0;
     public bool HasSlider => R.IsNumeric && R.Min != null && R.Max != null && R.Max > R.Min;
     public double SliderMin => R.Min ?? 0;
     public double SliderMax => R.Max ?? 100;
@@ -169,7 +170,8 @@ public sealed class SettingViewModel : ItemViewModel
     // ------------------------------------------------------------ key
 
     public string KeyFormat => R.KeyFormat;
-    public string KeyDescription => KeyNames.Describe(_value, R.KeyFormat);
+    public string? KeyNone => R.KeyNone;
+    public string KeyDescription => KeyNames.Describe(_value, R.KeyFormat, R.KeyNone);
 
     // ------------------------------------------------------------ validation
 
@@ -228,6 +230,8 @@ public sealed class SettingViewModel : ItemViewModel
                     "hex" => Loc.T("Stored as a hex virtual-key code."),
                     _ => Loc.T("Stored as a key name. Ctrl, Shift and Alt combine with +."),
                 });
+            if (R.Type == SettingTypes.Key && R.KeyNone != null) sb.AppendLine(Loc.T("No key is written as {0}.", R.KeyNone));
+            if (R.Type == SettingTypes.Key && R.Options.Count > 0) sb.AppendLine(Loc.T("The list beside the key box holds the other values the comments name."));
             if (R.Options.Count > 0 && R.Type == SettingTypes.Enum && AllowCustom) sb.AppendLine(Loc.T("Other values are allowed too."));
             switch (EffectiveLive)
             {

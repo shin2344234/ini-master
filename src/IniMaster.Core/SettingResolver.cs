@@ -16,6 +16,9 @@ public sealed class ResolvedSetting
     public string FalseValue { get; init; } = "0";
     /// For key: "vk" (decimal virtual-key code), "hex" (0x2D) or "name" (Ctrl+F1).
     public string KeyFormat { get; init; } = "name";
+    /// For key: what the mod writes for no key, when its comments say
+    /// ("-1 -> No shortcut key"). Null means the format's usual 0 or None.
+    public string? KeyNone { get; init; }
     public double? Min { get; init; }
     public double? Max { get; init; }
     public bool RangeGuessed { get; init; }
@@ -128,6 +131,10 @@ public static partial class SettingResolver
             keyFormat = value.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? "hex"
                 : int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out _) ? "vk" : "name";
 
+        string? keyNone = null;
+        if (type == SettingTypes.Key && m.Help != null && NoKeyValue().Match(m.Help) is { Success: true } nk)
+            keyNone = nk.Groups[1].Value;
+
         return new ResolvedSetting
         {
             Section = section,
@@ -138,6 +145,7 @@ public static partial class SettingResolver
             TrueValue = tv ?? "1",
             FalseValue = fv ?? "0",
             KeyFormat = keyFormat ?? "name",
+            KeyNone = keyNone,
             Min = m.Min,
             Max = m.Max,
             RangeGuessed = m.RangeGuessed,
@@ -161,6 +169,19 @@ public static partial class SettingResolver
     private static string Guess(string key, string value, KeyMeta m, List<OptionMeta> options,
         ref string? tv, ref string? fv, ref string? keyFormat)
     {
+        // A key whose comments also name a special value, like OptiScaler's
+        // "auto", is still a key, and the choices go beside the key box. Only
+        // hex codes and key names count before the choices are read: a small
+        // number next to a list of choices is more likely a mode than a key.
+        if (options.Count > 0 && IsKeyish(key) && !(options.Count == 2 && PairFromOptions(options) != null))
+        {
+            var p = (value.Length > 0 ? value : m.Default ?? "").Trim();
+            if (p.StartsWith("0x", StringComparison.OrdinalIgnoreCase) && KeyNames.TryParseVk(p, out _)) { keyFormat ??= "hex"; return SettingTypes.Key; }
+            if (!p.Equals("None", StringComparison.OrdinalIgnoreCase) && KeyNames.LooksLikeKeyName(p)) { keyFormat ??= "name"; return SettingTypes.Key; }
+            var text = m.Help + " " + string.Join(' ', options.Select(o => o.Label));
+            if (options.Any(o => o.Value.Equals(p, StringComparison.OrdinalIgnoreCase)) && HexVk().IsMatch(text)) { keyFormat ??= "hex"; return SettingTypes.Key; }
+        }
+
         if (options.Count > 0)
         {
             // Two choices become a checkbox only when their labels are short,
@@ -184,7 +205,7 @@ public static partial class SettingResolver
         if ((lower is "0" or "1") && !hasRealRange && !NumericName().IsMatch(key) && (m.LooksBoolean == true || BoolishName().IsMatch(key)))
             return SettingTypes.Bool;
 
-        if (KeyishName().IsMatch(key) && !key.StartsWith("Keep", StringComparison.OrdinalIgnoreCase))
+        if (IsKeyish(key))
         {
             if (int.TryParse(lower, NumberStyles.Integer, CultureInfo.InvariantCulture, out var vk) && vk is > 0 and < 256) { keyFormat ??= "vk"; return SettingTypes.Key; }
             if (lower.StartsWith("0x") && KeyNames.TryParseVk(probe, out _)) { keyFormat ??= "hex"; return SettingTypes.Key; }
@@ -258,6 +279,15 @@ public static partial class SettingResolver
 
     [GeneratedRegex(@"(^Key([A-Z_]|$)|Key$|Hotkey|HotKey|Keybind|KeyBind|KeyCode|Vk$|^Vk[A-Z])")]
     private static partial Regex KeyishName();
+
+    private static bool IsKeyish(string key) => KeyishName().IsMatch(key) && !key.StartsWith("Keep", StringComparison.OrdinalIgnoreCase);
+
+    [GeneratedRegex(@"\b0x[0-9A-Fa-f]{2}\b")]
+    private static partial Regex HexVk();
+
+    // "-1 -> No shortcut key", "0 = none", "-1: disabled".
+    [GeneratedRegex(@"(?<![\w.-])(-1|0)\s*(?:->|=>|=|:|-|means)\s*(?:no|none|disabled?|off|unbound|nothing)\b", RegexOptions.IgnoreCase)]
+    private static partial Regex NoKeyValue();
 
     [GeneratedRegex(@"^-?\d*\.\d+([eE][-+]?\d+)?f?$|^-?\d+\.\d*$")]
     private static partial Regex FloatText();

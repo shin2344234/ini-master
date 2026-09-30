@@ -127,13 +127,44 @@ public static class KeyNames
     }
 
     /// What to show next to the stored value: "Insert" for 45, or the name
-    /// itself.
-    public static string Describe(string value, string format)
+    /// itself. noneValue is what the mod writes for no key, when its
+    /// comments say (OptiScaler's -1).
+    public static string Describe(string value, string format, string? noneValue = null)
     {
+        if (noneValue != null && value.Trim() == noneValue) return "None";
         if (format is "vk" or "hex")
             return TryParseVk(value, out var vk) ? Name(vk) : value.Trim() is "0" or "" ? "None" : value;
         return value.Length == 0 ? "None" : value;
     }
 
     public static string NoneValue(string format) => format is "vk" or "hex" ? "0" : "None";
+
+    // Runs of keys that read better as a range than one by one.
+    private static readonly (int From, int To)[] Runs = { (0x70, 0x87), (0x41, 0x5A), (0x30, 0x39), (0x60, 0x69) };
+
+    /// Every key name a key box accepts, for its tooltip. A setting stored
+    /// as a code gets each key's code in that format too, since that is
+    /// what the file needs when it is edited by hand.
+    public static string Reference(string format)
+    {
+        var codes = format is "vk" or "hex";
+        string Code(int vk) => format == "hex" ? "0x" + vk.ToString("X2") : vk.ToString(CultureInfo.InvariantCulture);
+
+        var sb = new System.Text.StringBuilder(Loc.T("Keys it accepts:")).AppendLine();
+        foreach (var (from, to) in Runs)
+            sb.AppendLine(codes ? Loc.T("{0} to {1} = {2} to {3}", ByVk[from], ByVk[to], Code(from), Code(to))
+                                : Loc.T("{0} to {1}", ByVk[from], ByVk[to]));
+
+        var rest = ByVk.Where(kv => !Runs.Any(r => kv.Key >= r.From && kv.Key <= r.To))
+                       .OrderBy(kv => kv.Key)
+                       .Select(kv => codes ? $"{kv.Value} {Code(kv.Key)}" : kv.Value)
+                       .ToList();
+        // Short enough that a line fits the tooltip without wrapping.
+        var perLine = codes ? 4 : 7;
+        for (var i = 0; i < rest.Count; i += perLine)
+            sb.AppendLine(string.Join(", ", rest.Skip(i).Take(perLine)));
+
+        if (!codes) sb.AppendLine(Loc.T("Ctrl, Shift and Alt join a key with +, as in Ctrl+F1."));
+        return sb.ToString().TrimEnd();
+    }
 }

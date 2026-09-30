@@ -17,15 +17,23 @@ public sealed class KeyCaptureBox : TextBox
     public static readonly DependencyProperty FormatProperty = DependencyProperty.Register(
         nameof(Format), typeof(string), typeof(KeyCaptureBox), new PropertyMetadata("name", (d, _) => ((KeyCaptureBox)d).ShowValue()));
 
+    /// What the mod writes for no key, when it is not the format's usual 0 or None.
+    public static readonly DependencyProperty NoneValueProperty = DependencyProperty.Register(
+        nameof(NoneValue), typeof(string), typeof(KeyCaptureBox), new PropertyMetadata(null, (d, _) => ((KeyCaptureBox)d).ShowValue()));
+
     public string Value { get => (string)GetValue(ValueProperty); set => SetValue(ValueProperty, value); }
     public string Format { get => (string)GetValue(FormatProperty); set => SetValue(FormatProperty, value); }
+    public string? NoneValue { get => (string?)GetValue(NoneValueProperty); set => SetValue(NoneValueProperty, value); }
 
     public KeyCaptureBox()
     {
         IsReadOnly = true;
         IsReadOnlyCaretVisible = false;
         Cursor = Cursors.Hand;
-        ToolTip = Loc.T("Click, then press the key you want. Tab moves on.");
+        // Built when it opens, so it follows the format and the current language.
+        ToolTip = "";
+        ToolTipService.SetShowDuration(this, 60000);
+        ToolTipOpening += (_, _) => ToolTip = Loc.T("Click, then press the key you want. Tab moves on.") + "\n\n" + KeyNames.Reference(Format);
         GotKeyboardFocus += (_, _) => ShowValue();
         LostKeyboardFocus += (_, _) => ShowValue();
     }
@@ -34,7 +42,7 @@ public sealed class KeyCaptureBox : TextBox
     {
         if (IsKeyboardFocused) { Text = Loc.T("Press a key..."); return; }
         var v = Value ?? "";
-        var described = KeyNames.Describe(v, Format);
+        var described = KeyNames.Describe(v, Format, NoneValue);
         Text = Format is "vk" or "hex" && described != v ? $"{described}   ({v})" : described;
     }
 

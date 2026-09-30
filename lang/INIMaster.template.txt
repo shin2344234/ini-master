@@ -47,6 +47,7 @@ Create it
 Created {0} from the defaults the plugin describes.	
 Crimson Desert started. Changes still save straight to the ini files.	
 Crimson Desert was not found. Choose its folder.	
+Ctrl, Shift and Alt join a key with +, as in Ctrl+F1.	
 Default: {0}	
 Described by: {0}	
 Discard text edits	
@@ -70,6 +71,7 @@ INI Master {0} is out. You have {1}.\n\n{2}\n\nThe release lists no checksum, so
 INI Master {0} is out. You have {1}.\n\n{2}\n\nThis copy cannot replace itself, so open the download page?	
 INI Master {0} is the newest version.	
 Installing INI Master {0}...	
+Keys it accepts:	
 Language	
 Language: {0}.	
 Language: {0}. {1} lines of the translation were skipped because their placeholders did not match the English.	
@@ -81,6 +83,7 @@ Needs a number.
 Needs a whole number.	
 Next launch	
 No key	
+No key is written as {0}.	
 No mod selected	
 No plugin with this name. The ini may belong to a DLL mod or an overlay.	
 No translation for {0} yet, so the app stays in English. Mod help still follows the language where the mod has it.	
@@ -94,6 +97,7 @@ Open backups of this ini
 Open the plugin folder	
 Open this ini in the default editor	
 Other values are allowed too.	
+Other values the comments name, besides a key.	
 Pick a plugin on the left. If the list is empty, point INI Master at the Crimson Desert folder with the Game folder button.	
 Plain text values	
 Plugin: {0}	
@@ -131,6 +135,7 @@ The game is running. INI Master saves straight to the file; whether the game not
 The game is running. If the plugin only reads its ini at startup, the change applies next launch.	
 The highest allowed is {0}.	
 The ini's own comments are not used.	
+The list beside the key box holds the other values the comments name.	
 The lowest allowed is {0}.	
 The mod maker added help for INI Master.	
 The plugin rereads it while the game runs.	
@@ -175,5 +180,7 @@ whole number
 {0} is saved as {1}, which has no "{2}". Use other characters, or convert the file to UTF-8 in a text editor.	
 {0} other ini files	
 {0} plugins	
+{0} to {1}	
+{0} to {1} = {2} to {3}	
 {0} unsaved changes	
 {0}, no plugin	

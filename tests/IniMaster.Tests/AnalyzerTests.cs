@@ -160,6 +160,68 @@ public class AnalyzerTests
         Assert.Equal(SettingTypes.String, S(v, "PrivateStoragePad").Type);
     }
 
+    // OptiScaler.ini's layout. Its comments name "auto" as a choice, which
+    // used to turn every shortcut key into a dropdown of that one word.
+    [Fact]
+    public void KeysWithChoicesInTheCommentsStillGetTheKeyBox()
+    {
+        var v = View("""
+            [Menu]
+            ; Shortcut key for opening menu
+            ; https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
+            ; Integer value - Default (auto) is 0x2D which equals VK_INSERT/Insert key
+            ; -1 -> No shortcut key
+            ShortcutKey = 0x60
+
+            ; Shortcut key for FPS overlay
+            ; Integer value - Default (auto) is 0x21 -> VK_PRIOR/Page up key
+            ; -1 -> No shortcut key
+            FpsShortcutKey = auto
+
+            ; How the overlay key behaves.
+            ;   1  hold
+            ;   2  toggle
+            KeyMode=1
+
+            ; Whether the hotkey works at all.
+            ;   0  off
+            ;   1  on
+            UseHotkey=1
+            """);
+
+        var menu = S(v, "ShortcutKey");
+        Assert.Equal(SettingTypes.Key, menu.Type);
+        Assert.Equal("hex", menu.KeyFormat);
+        Assert.Equal("-1", menu.KeyNone);
+        Assert.Contains(menu.Options, o => o.Value == "auto");
+
+        var fps = S(v, "FpsShortcutKey");
+        Assert.Equal(SettingTypes.Key, fps.Type);
+        Assert.Equal("hex", fps.KeyFormat);
+        Assert.Equal("-1", fps.KeyNone);
+
+        Assert.Equal(SettingTypes.Enum, S(v, "KeyMode").Type);
+        Assert.Equal(SettingTypes.Bool, S(v, "UseHotkey").Type);
+    }
+
+    [Theory]
+    [InlineData("name", "F1 to F24")]
+    [InlineData("name", "Numpad0 to Numpad9")]
+    [InlineData("name", "Ctrl+F1")]
+    [InlineData("hex", "Insert 0x2D")]
+    [InlineData("hex", "F1 to F24 = 0x70 to 0x87")]
+    [InlineData("vk", "Insert 45")]
+    [InlineData("vk", "A to Z = 65 to 90")]
+    public void KeyListNamesEveryKey(string format, string expected) => Assert.Contains(expected, KeyNames.Reference(format));
+
+    [Fact]
+    public void KeyListLeavesNoKeyOut()
+    {
+        var list = KeyNames.Reference("hex");
+        foreach (var name in new[] { "Mouse4", "Backspace", "PrintScreen", "LWin", "Multiply", "ScrollLock", "RAlt", "Tilde", "Quote" })
+            Assert.Contains(name, list);
+    }
+
     [Fact]
     public void DirectivesOverrideAndValidate()
     {
