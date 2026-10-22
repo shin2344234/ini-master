@@ -9,6 +9,7 @@ It works while the game is running. Changes save to the ini a moment after you m
 Download `INIMaster-<version>.zip` from [Nexus Mods](https://www.nexusmods.com/crimsondesert/mods/3578) or the [GitHub releases](https://github.com/shin2344234/ini-master/releases), unzip it anywhere and run `INIMaster.exe`. It finds the game through Steam's library list, Epic's manifests or the usual folders. If it misses, press Game folder and pick the Crimson Desert folder or `bin64`.
 
 - Pick a mod on the left. Hover a setting for its full help, or click it to pin the help at the bottom.
+- A key setting has a box that records the next key you press. The keyboard button beside it opens a picture of a keyboard to click instead, which also shows each key's name and code.
 - "Save as I edit" writes each change straight away. Turn it off to collect changes and save with Ctrl+S (Ctrl+Shift+S saves every file).
 - The dot next to a setting marks an unsaved change. The two buttons on its right undo that change, or put the default back when the mod declares one.
 - "Plain text values" swaps every control for the raw text, for when a guess about a setting's type is wrong. The File text tab edits the whole file.

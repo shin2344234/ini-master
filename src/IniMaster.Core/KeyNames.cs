@@ -126,6 +126,28 @@ public static class KeyNames
         }
     }
 
+    /// The reverse of Format: reads a stored value in the setting's own format
+    /// back into a key and its modifiers. False for no key or text that is not
+    /// a key, such as a mode number on a setting that also takes choices.
+    public static bool TryParse(string value, string format, out int vk, out bool ctrl, out bool shift, out bool alt)
+    {
+        vk = 0;
+        ctrl = shift = alt = false;
+        if (string.IsNullOrWhiteSpace(value)) return false;
+        if (format is "vk" or "hex") return TryParseVk(value, out vk);
+
+        var parts = value.Split('+');
+        for (var i = 0; i < parts.Length - 1; i++)
+        {
+            var m = parts[i].Trim();
+            if (m.Equals("Ctrl", StringComparison.OrdinalIgnoreCase) || m.Equals("Control", StringComparison.OrdinalIgnoreCase)) ctrl = true;
+            else if (m.Equals("Shift", StringComparison.OrdinalIgnoreCase)) shift = true;
+            else if (m.Equals("Alt", StringComparison.OrdinalIgnoreCase)) alt = true;
+            else return false;
+        }
+        return TryName(parts[^1], out vk);
+    }
+
     /// What to show next to the stored value: "Insert" for 45, or the name
     /// itself. noneValue is what the mod writes for no key, when its
     /// comments say (OptiScaler's -1).

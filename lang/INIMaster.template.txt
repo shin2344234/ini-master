@@ -32,6 +32,7 @@ Check when INI Master starts
 Checked every two seconds. Saving works either way; a running game only notices if the plugin rereads its ini.	
 Choose the Crimson Desert folder	
 Choose the Crimson Desert folder, the one with bin64 in it	
+Click the key you want.	
 Click, then press the key you want. Tab moves on.	
 Could not check for updates: {0}	
 Could not create {0}: {1}	
@@ -91,6 +92,7 @@ Nobody wrote help for this one yet.
 Not one of the listed choices.	
 Not saved. {0}: {1}	
 Nothing to save. The text matches the file.	
+Numpad	
 Off	
 On	
 Open backups of this ini	
@@ -98,6 +100,7 @@ Open the plugin folder
 Open this ini in the default editor	
 Other values are allowed too.	
 Other values the comments name, besides a key.	
+Pick a key from a keyboard	
 Pick a plugin on the left. If the list is empty, point INI Master at the Crimson Desert folder with the Game folder button.	
 Plain text values	
 Plugin: {0}	

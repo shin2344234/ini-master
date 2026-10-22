@@ -42,7 +42,8 @@ Other things it picks up:
 - A single range such as `1-100` or `100 to 10000` in the help becomes a slider. The tool only warns when a value falls outside a range it read from prose. It never refuses one.
 - "Takes effect next start" marks a key as needing a restart. "Picked up while the game runs" marks the whole mod as reloading its ini.
 - `true`/`false`, `on`/`off` and `yes`/`no` values are checkboxes. A `0`/`1` value becomes a checkbox when its help starts with "1 turns...", "1 makes...", or when the key's name looks like a switch (`Enabled`, `ShowHud`, `HookXInput`).
-- A key named like a hotkey (`MenuKey`, `KeyToggle`, `ToggleKey`) with a virtual-key code (`45`) or a key name (`F11`, `Ctrl+F1`) gets a box that records the next key you press, and writes it back in the same form.
+- A key named like a hotkey (`MenuKey`, `KeyToggle`, `ToggleKey`) with a virtual-key code (`45`) or a key name (`F11`, `Ctrl+F1`) gets a box that records the next key you press, and writes it back in the same form. The keyboard button beside the box opens a picture of a keyboard instead, so a key can be clicked when pressing it is awkward or when you do not know its name or number. Ctrl, Shift and Alt tick boxes join a key to a name setting with +.
+- A setting whose name does not look like a hotkey gets the same box and keyboard when you say what it is: `;@ type=key format=vk` above the key, or `"type": "key", "format": "vk"` in the metadata. `format` is `vk` for a decimal virtual-key code, `hex` for `0x2D`, or `name` for `Ctrl+F1`.
 
 Players can switch to plain text values or the File text tab whenever a guess is wrong.
 
