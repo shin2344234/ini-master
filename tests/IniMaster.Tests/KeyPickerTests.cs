@@ -99,4 +99,25 @@ public class KeyPickerTests
         Assert.Equal(SettingTypes.Key, s.Type);
         Assert.Equal("vk", s.KeyFormat);
     }
+
+    // blinding_flash_vision.ini, reported on Discord on 2026-10-27: after the
+    // clear button wrote 0, ToggleKey came back as an on/off switch.
+    [Theory]
+    [InlineData("35")]
+    [InlineData("0")]
+    public void AClearedKeyCodeStaysAKey(string value)
+    {
+        var ini = $"""
+            [Settings]
+            ; Enable automatically at startup. 0 = start disabled.
+            StartEnabled=1
+            ; Windows virtual-key code. 35 = END. Read only with the game focused.
+            ToggleKey={value}
+            """;
+        var view = IniView.Build(new IniTarget { IniPath = "x.ini", Meta = new ModMeta() }, IniDocument.Parse(ini));
+        var s = view.Settings.Single(x => x.Setting.Key == "ToggleKey").Setting;
+        Assert.Equal(SettingTypes.Key, s.Type);
+        Assert.Equal("vk", s.KeyFormat);
+        Assert.Equal(SettingTypes.Bool, view.Settings.Single(x => x.Setting.Key == "StartEnabled").Setting.Type);
+    }
 }

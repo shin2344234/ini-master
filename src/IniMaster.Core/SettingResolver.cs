@@ -201,13 +201,18 @@ public static partial class SettingResolver
         var lower = probe.Trim().ToLowerInvariant();
         if (lower is "true" or "false" or "on" or "off" or "yes" or "no") return SettingTypes.Bool;
 
+        // ToggleKey=0 under "Windows virtual-key code" is a key with none set,
+        // which is what the key box's clear button writes. Its name alone
+        // would make it a switch.
+        var keyByHelp = IsKeyish(key) && m.Help != null && KeyCodeHelp().IsMatch(m.Help);
+
         var hasRealRange = (m.Min != null || m.Max != null) && !m.RangeGuessed;
-        if ((lower is "0" or "1") && !hasRealRange && !NumericName().IsMatch(key) && (m.LooksBoolean == true || BoolishName().IsMatch(key)))
+        if ((lower is "0" or "1") && !keyByHelp && !hasRealRange && !NumericName().IsMatch(key) && (m.LooksBoolean == true || BoolishName().IsMatch(key)))
             return SettingTypes.Bool;
 
         if (IsKeyish(key))
         {
-            if (int.TryParse(lower, NumberStyles.Integer, CultureInfo.InvariantCulture, out var vk) && vk is > 0 and < 256) { keyFormat ??= "vk"; return SettingTypes.Key; }
+            if (int.TryParse(lower, NumberStyles.Integer, CultureInfo.InvariantCulture, out var vk) && (vk is > 0 and < 256 || (vk == 0 && keyByHelp))) { keyFormat ??= "vk"; return SettingTypes.Key; }
             if (lower.StartsWith("0x") && KeyNames.TryParseVk(probe, out _)) { keyFormat ??= "hex"; return SettingTypes.Key; }
             if (KeyNames.LooksLikeKeyName(probe)) { keyFormat ??= "name"; return SettingTypes.Key; }
         }
@@ -284,6 +289,9 @@ public static partial class SettingResolver
 
     [GeneratedRegex(@"\b0x[0-9A-Fa-f]{2}\b")]
     private static partial Regex HexVk();
+
+    [GeneratedRegex(@"virtual[- ]?key|key[- ]?code|\bVK(_|\b)", RegexOptions.IgnoreCase)]
+    private static partial Regex KeyCodeHelp();
 
     // "-1 -> No shortcut key", "0 = none", "-1: disabled".
     [GeneratedRegex(@"(?<![\w.-])(-1|0)\s*(?:->|=>|=|:|-|means)\s*(?:no|none|disabled?|off|unbound|nothing)\b", RegexOptions.IgnoreCase)]

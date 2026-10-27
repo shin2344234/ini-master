@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using IniMaster.Core;
@@ -110,6 +111,11 @@ public sealed class KeyPickerButton : Button
         var body = new StackPanel();
         body.Children.Add(header);
         body.Children.Add(canvas);
+
+        // A popup outside the logical tree inherits from its placement target,
+        // and this button's text is in the icon font, which has no letters.
+        TextElement.SetFontFamily(body, (FontFamily)Application.Current.FindResource("BodyFont"));
+        TextElement.SetFontSize(body, 13);
 
         var frame = new Border
         {
