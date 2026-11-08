@@ -97,6 +97,22 @@ public static partial class SettingResolver
         ("1", "0"), ("true", "false"), ("on", "off"), ("yes", "no"), ("enabled", "disabled"),
     };
 
+    /// The format a stored key is written in, or null when the text can't
+    /// tell: a blank value and 0 read the same in every format.
+    private static string? KeyFormatShownBy(string? value)
+    {
+        var v = (value ?? "").Trim();
+        if (v.Length == 0 || v == "0") return null;
+        if (v.StartsWith("0x", StringComparison.OrdinalIgnoreCase)) return "hex";
+        return int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out _) ? "vk" : "name";
+    }
+
+    /// The format for a key after the file reloads. Emptying a key removes
+    /// the only sign of how the mod stores it, so the one known before the
+    /// reload stays until the file shows another.
+    public static string KeepKeyFormat(string resolved, string? previous, string value) =>
+        previous != null && KeyFormatShownBy(value) == null ? previous : resolved;
+
     public static ResolvedSetting Resolve(string section, string key, string? fileValue, KeyMeta m)
     {
         var value = fileValue ?? m.Default ?? "";
@@ -128,8 +144,8 @@ public static partial class SettingResolver
             allowCustom = true;
 
         if (type == SettingTypes.Key && keyFormat == null)
-            keyFormat = value.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? "hex"
-                : int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out _) ? "vk" : "name";
+            keyFormat = KeyFormatShownBy(value) ?? KeyFormatShownBy(m.Default)
+                ?? (value.Trim() == "0" ? "vk" : "name");
 
         string? keyNone = null;
         if (type == SettingTypes.Key && m.Help != null && NoKeyValue().Match(m.Help) is { Success: true } nk)
@@ -212,7 +228,7 @@ public static partial class SettingResolver
 
         if (IsKeyish(key))
         {
-            if (int.TryParse(lower, NumberStyles.Integer, CultureInfo.InvariantCulture, out var vk) && (vk is > 0 and < 256 || (vk == 0 && keyByHelp))) { keyFormat ??= "vk"; return SettingTypes.Key; }
+            if (int.TryParse(lower, NumberStyles.Integer, CultureInfo.InvariantCulture, out var vk) && (vk is > 0 and < 256 || (vk == 0 && keyByHelp))) { if (vk != 0) keyFormat ??= "vk"; return SettingTypes.Key; }
             if (lower.StartsWith("0x") && KeyNames.TryParseVk(probe, out _)) { keyFormat ??= "hex"; return SettingTypes.Key; }
             if (KeyNames.LooksLikeKeyName(probe)) { keyFormat ??= "name"; return SettingTypes.Key; }
         }

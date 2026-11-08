@@ -100,6 +100,49 @@ public class KeyPickerTests
         Assert.Equal("vk", s.KeyFormat);
     }
 
+    // A blank value and 0 read the same in every format, so neither can say
+    // how the mod stores its keys. Reported on Discord on 2026-11-08.
+    [Theory]
+    [InlineData("", "0x2E", "hex")]
+    [InlineData("", "46", "vk")]
+    [InlineData("0", "0x2E", "hex")]
+    [InlineData("0", "46", "vk")]
+    [InlineData("46", "0x2E", "vk")]
+    [InlineData("0x2E", "46", "hex")]
+    [InlineData("0", null, "vk")]
+    [InlineData("", null, "name")]
+    public void AnEmptyKeyTakesItsFormatFromTheDefault(string value, string? def, string format)
+    {
+        var s = SettingResolver.Resolve("s", "Hotkey", value, new KeyMeta { Type = SettingTypes.Key, Default = def });
+        Assert.Equal(format, s.KeyFormat);
+    }
+
+    [Fact]
+    public void AGuessedKeyClearedToZeroTakesItsFormatFromTheDefault()
+    {
+        var s = SettingResolver.Resolve("s", "ToggleKey", "0", new KeyMeta { Help = "Windows virtual-key code.", Default = "0x2E" });
+        Assert.Equal(SettingTypes.Key, s.Type);
+        Assert.Equal("hex", s.KeyFormat);
+    }
+
+    [Theory]
+    [InlineData("hex", "vk", "", "vk")]
+    [InlineData("name", "vk", "", "vk")]
+    [InlineData("vk", "hex", "0", "hex")]
+    [InlineData("hex", "vk", "0x2E", "hex")]
+    [InlineData("vk", "hex", "46", "vk")]
+    [InlineData("hex", null, "", "hex")]
+    public void AReloadKeepsTheFormatWhenTheValueCannotShowOne(string resolved, string? previous, string value, string format) =>
+        Assert.Equal(format, SettingResolver.KeepKeyFormat(resolved, previous, value));
+
+    [Fact]
+    public void ADecimalKeyEmptiedInTheTextTabIsPickedAsDecimal()
+    {
+        var reloaded = SettingResolver.Resolve("s", "Hotkey", "", new KeyMeta { Type = SettingTypes.Key, Default = "0x2E" });
+        var format = SettingResolver.KeepKeyFormat(reloaded.KeyFormat, "vk", "");
+        Assert.Equal("46", KeyNames.Format(0x2E, false, false, false, format));
+    }
+
     // blinding_flash_vision.ini, reported on Discord on 2026-10-27: after the
     // clear button wrote 0, ToggleKey came back as an on/off switch.
     [Theory]

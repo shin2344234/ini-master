@@ -29,15 +29,16 @@ public sealed class SettingViewModel : ItemViewModel
     private string? _fileValue;
     private bool _suppress;
 
-    public SettingViewModel(IniFileViewModel owner, ResolvedSetting setting, string? fileValue)
+    public SettingViewModel(IniFileViewModel owner, ResolvedSetting setting, string? fileValue, string keyFormat)
     {
         _owner = owner;
         R = setting;
+        KeyFormat = keyFormat;
         _fileValue = fileValue;
         _value = fileValue ?? setting.Default ?? "";
         ResetCommand = new RelayCommand(() => Value = R.Default ?? "", () => CanReset);
         RevertCommand = new RelayCommand(() => Value = SavedValue, () => IsDirty);
-        ClearKeyCommand = new RelayCommand(() => Value = R.KeyNone ?? KeyNames.NoneValue(R.KeyFormat));
+        ClearKeyCommand = new RelayCommand(() => Value = R.KeyNone ?? KeyNames.NoneValue(KeyFormat));
     }
 
     public ResolvedSetting R { get; }
@@ -169,9 +170,9 @@ public sealed class SettingViewModel : ItemViewModel
 
     // ------------------------------------------------------------ key
 
-    public string KeyFormat => R.KeyFormat;
+    public string KeyFormat { get; }
     public string? KeyNone => R.KeyNone;
-    public string KeyDescription => KeyNames.Describe(_value, R.KeyFormat, R.KeyNone);
+    public string KeyDescription => KeyNames.Describe(_value, KeyFormat, R.KeyNone);
 
     // ------------------------------------------------------------ validation
 
@@ -224,7 +225,7 @@ public sealed class SettingViewModel : ItemViewModel
             }
             if (R.Type == SettingTypes.Bool) sb.AppendLine(Loc.T("Writes {0} for on and {1} for off.", R.TrueValue, R.FalseValue));
             if (R.Type == SettingTypes.Key)
-                sb.AppendLine(R.KeyFormat switch
+                sb.AppendLine(KeyFormat switch
                 {
                     "vk" => Loc.T("Stored as a virtual-key code."),
                     "hex" => Loc.T("Stored as a hex virtual-key code."),

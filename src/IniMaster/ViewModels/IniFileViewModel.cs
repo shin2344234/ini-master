@@ -35,6 +35,7 @@ public sealed class IniFileViewModel : ObservableObject
 {
     private readonly MainViewModel _main;
     private readonly Dictionary<(string, string), string> _pending = new(new KeyComparer());
+    private readonly Dictionary<(string, string), string> _keyFormats = new(new KeyComparer());
     private readonly DispatcherTimer _saveTimer;
     private IniDocument? _doc;
     private string? _lastHash;
@@ -131,7 +132,7 @@ public sealed class IniFileViewModel : ObservableObject
                 {
                     ViewNote n => new NoteViewModel(n.Text),
                     ViewGroup g => new GroupViewModel(g.Title),
-                    ViewSetting v => new SettingViewModel(this, v.Setting, v.FileValue),
+                    ViewSetting v => NewSetting(v),
                     _ => throw new InvalidOperationException(),
                 });
             }
@@ -142,6 +143,18 @@ public sealed class IniFileViewModel : ObservableObject
             if (_pending.TryGetValue((s.Section, s.Key), out var v)) s.RestoreEdit(v);
         ApplyFilter();
         RaiseChangeState();
+    }
+
+    private SettingViewModel NewSetting(ViewSetting v)
+    {
+        var format = v.Setting.KeyFormat;
+        if (v.Setting.Type == SettingTypes.Key)
+        {
+            var key = (v.Setting.Section, v.Setting.Key);
+            format = SettingResolver.KeepKeyFormat(format, _keyFormats.GetValueOrDefault(key), v.FileValue ?? "");
+            _keyFormats[key] = format;
+        }
+        return new SettingViewModel(this, v.Setting, v.FileValue, format);
     }
 
     /// The file with its values blanked. If only values changed on disk, the
