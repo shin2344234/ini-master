@@ -1,0 +1,24 @@
+{
+  "name": "INI Master",
+  "fileBase": "INIMaster",
+  "version": { "header": "src/IniMaster/IniMaster.csproj", "pattern": "<Version>([^<]+)</Version>" },
+  "scriptsDir": "scripts",
+  "dist": "dist",
+  "plugin": "INIMaster.exe",
+  "oneArchive": true,
+  "package": "powershell -NoProfile -ExecutionPolicy Bypass -File publish.ps1",
+  "sources": ["src", "lang", "sdk"],
+  "manualZip": ["README.md", "docs/METADATA.md", "docs/TRANSLATING.md"],
+  "gates": [],
+  "evergreen": ["private/nexus/nexus-description.bbcode"],
+  "github": "shin2344234/ini-master",
+  "nexus": {
+    "game": "crimsondesert",
+    "page": "3578",
+    "modId": "38521561681402",
+    "dmmFileId": "",
+    "manualFileId": "8015109"
+  },
+  "discord": { "channel": "1547305058922668072" },
+  "requires": []
+}

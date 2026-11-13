@@ -5,3 +5,4 @@ sdk/example/build/
 *.user
 .vs/
 private/
+*.local.env

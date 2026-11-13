@@ -1,25 +1,29 @@
 <#
 .SYNOPSIS
-    Sign INIMaster.exe with Azure Trusted Signing, then verify it.
+    Sign the plugin with Azure Trusted Signing, then verify it.
 
 .DESCRIPTION
+    Synced from release-kit. Do not edit it here; the next sync overwrites it.
+
     Runs signtool with the Azure Trusted Signing dlib against the account in
     private\signing.json (endpoint, account name, certificate profile; no
     secrets). The credential is the Azure CLI login, so `az login` once on
-    this machine is the whole setup. Same account and certificate as Master
-    Looter and Stamina Master.
+    this machine is the whole setup. The certificate is issued to Seth Walker
+    under Microsoft's identity-verified chain, and every mod signs with it.
 
-    private\tools is a copy of vpk's vendor\signing folder. Use the signtool
-    in it: the Windows SDK's own signtool ignores the dlib and fails with "No
-    certificates were found that met all the given criteria".
+    The signtool that works is the one beside the dlib in private\tools, the
+    copy vpk ships. The Windows SDK's own signtool ignores the dlib and fails
+    with "No certificates were found that met all the given criteria".
 
-    publish.ps1 calls this before it builds the zip, so the zip and the
-    checksum in the release notes are of the signed file.
+    Sign before package.ps1, never after: the archives carry the plugin and
+    the checksums on the Nexus page are of the signed file. An unsigned binary
+    with no history is what the antivirus models react to, and a
+    Microsoft-issued signature carries reputation from one release to the next.
 
 .EXAMPLE
-    .\scripts\sign.ps1                       signs dist\INIMaster.exe
-    .\scripts\sign.ps1 -Path some\other.exe  signs that file instead
-    .\scripts\sign.ps1 -VerifyOnly           reports the signature already on the file
+    .\sign.ps1                       signs <dist>\<fileBase>.asi from release.json
+    .\sign.ps1 -Path some\other.dll  signs that file instead
+    .\sign.ps1 -VerifyOnly           reports the signature already on the file
 #>
 [CmdletBinding()]
 param(
@@ -28,17 +32,18 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$repo = Resolve-Path (Join-Path $PSScriptRoot '..')
-if (-not $Path) { $Path = Join-Path $repo 'dist\INIMaster.exe' }
+. (Join-Path $PSScriptRoot 'ReleaseConfig.ps1')
+$cfg = Get-ReleaseConfig
+if (-not $Path) { $Path = $cfg.Asi }
 $Path = (Resolve-Path $Path).Path
 
-$tools    = Join-Path $repo 'private\tools'
-$metadata = Join-Path $repo 'private\signing.json'
+$tools    = Join-Path $cfg.Root 'private\tools'
+$metadata = Join-Path $cfg.Root 'private\signing.json'
 $dlib     = Join-Path $tools 'Azure.CodeSigning.Dlib.dll'
 $signtool = Join-Path $tools 'signtool.exe'
 foreach ($f in @($metadata, $dlib, $signtool)) {
     if (-not (Test-Path -LiteralPath $f)) {
-        throw "Missing $f. private\tools is a copy of vpk's vendor\signing folder, as used by Master Looter."
+        throw "Missing $f. private\tools is a copy of vpk's vendor\signing folder; copy it and private\signing.json from any other mod."
     }
 }
 $bom = [System.IO.File]::ReadAllBytes($metadata) | Select-Object -First 3
