@@ -266,6 +266,11 @@ public class KeyPickerTests
         Assert.True(helped.KeyCanBeNone);
         Assert.Null(helped.Validate("-1"));
 
+        var prose = SettingResolver.Resolve("s", "DresserKey", "None",
+            new KeyMeta { Type = SettingTypes.Key, Format = "name", Keys = new() { "F1-F24", "A-Z" }, Help = "Press to open it. None turns the key off." });
+        Assert.True(prose.KeyCanBeNone);
+        Assert.Null(prose.Validate("None"));
+
         var open = SettingResolver.Resolve("s", "Hotkey", "Q", new KeyMeta { Type = SettingTypes.Key, Format = "name" });
         Assert.True(open.KeyCanBeNone);
         Assert.Null(open.Validate("None"));

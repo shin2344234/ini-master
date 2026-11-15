@@ -192,7 +192,8 @@ public static partial class SettingResolver
             KeyFormat = keyFormat ?? "name",
             KeyNone = keyNone,
             AllowedKeys = allowedKeys,
-            KeyCanBeNone = allowedKeys == null || keyNone != null || KeyNames.ListsNone(m.Keys!),
+            KeyCanBeNone = allowedKeys == null || keyNone != null || KeyNames.ListsNone(m.Keys!) ||
+                           (m.Help != null && NoneTurnsItOff().IsMatch(m.Help)),
             KeyModifiers = type != SettingTypes.Key || m.Modifiers != false,
             Min = m.Min,
             Max = m.Max,
@@ -353,6 +354,10 @@ public static partial class SettingResolver
     // "-1 -> No shortcut key", "0 = none", "-1: disabled".
     [GeneratedRegex(@"(?<![\w.-])(-1|0)\s*(?:->|=>|=|:|-|means)\s*(?:no|none|disabled?|off|unbound|nothing)\b", RegexOptions.IgnoreCase)]
     private static partial Regex NoKeyValue();
+
+    // "None turns the key off", "None leaves it unbound", "None disables it".
+    [GeneratedRegex(@"\bNone\s+(?:turns|switches|leaves|unbinds|disables|means|=|:|-)", RegexOptions.IgnoreCase)]
+    private static partial Regex NoneTurnsItOff();
 
     [GeneratedRegex(@"^-?\d*\.\d+([eE][-+]?\d+)?f?$|^-?\d+\.\d*$")]
     private static partial Regex FloatText();
