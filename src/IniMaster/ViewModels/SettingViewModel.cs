@@ -38,7 +38,9 @@ public sealed class SettingViewModel : ItemViewModel
         _value = fileValue ?? setting.Default ?? "";
         ResetCommand = new RelayCommand(() => Value = R.Default ?? "", () => CanReset);
         RevertCommand = new RelayCommand(() => Value = SavedValue, () => IsDirty);
-        ClearKeyCommand = new RelayCommand(() => Value = R.KeyNone ?? KeyNames.NoneValue(KeyFormat));
+        // A mod that lists its keys without None keeps its old key when given
+        // none, so the page would show a key that is not the one in use.
+        ClearKeyCommand = new RelayCommand(() => Value = R.KeyNone ?? KeyNames.NoneValue(KeyFormat), () => R.KeyCanBeNone);
     }
 
     public ResolvedSetting R { get; }

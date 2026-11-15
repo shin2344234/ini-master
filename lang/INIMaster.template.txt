@@ -146,6 +146,7 @@ The mod reads the key on its own, without Ctrl, Shift or Alt.
 The plugin rereads it while the game runs.	
 The plugin rereads this while the game runs.	
 There are unsaved changes ({0}). Save them first?	
+This mod needs a key and cannot be left without one.	
 This mod reads the key on its own, without Ctrl, Shift or Alt.	
 This plugin reads its ini at startup, so restart the game to apply it.	
 This plugin reads the setting at startup. Saving works now; restart the game to see it.	

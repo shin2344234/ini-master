@@ -190,8 +190,9 @@ public class KeyPickerTests
     [InlineData("F24", true)]
     [InlineData("Q", true)]
     [InlineData("Numpad7", true)]
-    [InlineData("None", true)]
-    [InlineData("", true)]
+    [InlineData("None", false)]
+    [InlineData("", false)]
+    [InlineData("0", true)]
     [InlineData("Down", false)]
     [InlineData("Escape", false)]
     [InlineData("Mouse4", false)]
@@ -242,5 +243,31 @@ public class KeyPickerTests
             new KeyMeta { Type = SettingTypes.Key, Format = "name", Keys = new() { "VK_F1", "VK_F2" } });
         Assert.Null(s.AllowedKeys);
         Assert.Null(s.Validate("Q"));
+    }
+
+    [Fact]
+    public void NoKeyPassesOnlyWhenTheKeysListOrTheHelpAllowsIt()
+    {
+        var bare = SettingResolver.Resolve("s", "Hotkey", "F5",
+            new KeyMeta { Type = SettingTypes.Key, Format = "vk", Keys = new() { "F1-F12" } });
+        Assert.False(bare.KeyCanBeNone);
+        Assert.NotNull(bare.Validate("0"));
+        Assert.NotNull(bare.Validate(""));
+
+        var listed = SettingResolver.Resolve("s", "Hotkey", "F5",
+            new KeyMeta { Type = SettingTypes.Key, Format = "name", Keys = new() { "F1-F12", "None" } });
+        Assert.True(listed.KeyCanBeNone);
+        Assert.Null(listed.Validate("None"));
+        Assert.NotNull(listed.Validate("0"));
+
+        var helped = SettingResolver.Resolve("s", "Hotkey", "112",
+            new KeyMeta { Type = SettingTypes.Key, Format = "vk", Keys = new() { "F1-F12" }, Help = "-1 = no shortcut key" });
+        Assert.Equal("-1", helped.KeyNone);
+        Assert.True(helped.KeyCanBeNone);
+        Assert.Null(helped.Validate("-1"));
+
+        var open = SettingResolver.Resolve("s", "Hotkey", "Q", new KeyMeta { Type = SettingTypes.Key, Format = "name" });
+        Assert.True(open.KeyCanBeNone);
+        Assert.Null(open.Validate("None"));
     }
 }

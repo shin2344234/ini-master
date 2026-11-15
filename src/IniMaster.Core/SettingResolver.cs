@@ -23,6 +23,9 @@ public sealed class ResolvedSetting
     public IReadOnlySet<int>? AllowedKeys { get; init; }
     /// For key: false when the mod reads no Ctrl, Shift or Alt with the key.
     public bool KeyModifiers { get; init; } = true;
+    /// For key: false when the mod lists the keys it reads and no key is not
+    /// one of them, so it cannot be left unbound.
+    public bool KeyCanBeNone { get; init; } = true;
     public double? Min { get; init; }
     public double? Max { get; init; }
     public bool RangeGuessed { get; init; }
@@ -70,13 +73,16 @@ public sealed class ResolvedSetting
         }
     }
 
-    /// A key the mod's metadata says it cannot read. No key, and the other
-    /// values the comments name, always pass.
+    /// A key the mod's metadata says it cannot read. The other values the
+    /// comments name always pass, and no key passes unless the mod's keys
+    /// list leaves it out. In the name format 0 is the 0 key, not no key.
     private string? ValidateKey(string value)
     {
         var v = value.Trim();
-        if (v.Length == 0 || v == "0" || v.Equals("None", StringComparison.OrdinalIgnoreCase) || v == KeyNone) return null;
         if (Options.Any(o => string.Equals(o.Value, v, StringComparison.OrdinalIgnoreCase))) return null;
+        if (v.Length == 0 || v.Equals("None", StringComparison.OrdinalIgnoreCase) || v == KeyNone ||
+            (v == "0" && KeyFormat is "vk" or "hex"))
+            return KeyCanBeNone ? null : Loc.T("This mod needs a key and cannot be left without one.");
         if (!KeyNames.TryParse(v, KeyFormat, out var vk, out var ctrl, out var shift, out var alt)) return null;
         if (!KeyModifiers && (ctrl || shift || alt)) return Loc.T("This mod reads the key on its own, without Ctrl, Shift or Alt.");
         if (AllowedKeys != null && !AllowedKeys.Contains(vk)) return Loc.T("{0} is not a key this mod reads.", KeyNames.Name(vk));
@@ -169,6 +175,7 @@ public static partial class SettingResolver
             keyFormat = KeyFormatShownBy(value) ?? KeyFormatShownBy(m.Default) ?? FormatFromHelp(m.Help)
                 ?? (value.Trim() == "0" ? "vk" : "name");
 
+        var allowedKeys = type == SettingTypes.Key && m.Keys is { Count: > 0 } ks ? KeyNames.ExpandKeyList(ks) : null;
         string? keyNone = null;
         if (type == SettingTypes.Key && m.Help != null && NoKeyValue().Match(m.Help) is { Success: true } nk)
             keyNone = nk.Groups[1].Value;
@@ -184,7 +191,8 @@ public static partial class SettingResolver
             FalseValue = fv ?? "0",
             KeyFormat = keyFormat ?? "name",
             KeyNone = keyNone,
-            AllowedKeys = type == SettingTypes.Key && m.Keys is { Count: > 0 } ks ? KeyNames.ExpandKeyList(ks) : null,
+            AllowedKeys = allowedKeys,
+            KeyCanBeNone = allowedKeys == null || keyNone != null || KeyNames.ListsNone(m.Keys!),
             KeyModifiers = type != SettingTypes.Key || m.Modifiers != false,
             Min = m.Min,
             Max = m.Max,
