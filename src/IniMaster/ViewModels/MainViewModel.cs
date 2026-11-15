@@ -415,7 +415,9 @@ public sealed class MainViewModel : ObservableObject
             if (ext is ".asi" or ".inimeta") { rescan = true; continue; }
             var owner = Mods.SelectMany(m => m.Files).FirstOrDefault(f => string.Equals(f.Path, path, StringComparison.OrdinalIgnoreCase));
             if (owner == null) { rescan |= File.Exists(path); continue; }
-            if (owner.Sections.Count > 0 || !owner.Exists) owner.OnChangedOnDisk();
+            // A file that appears, or an empty one that gets content, has no
+            // sections yet, so being loaded is what counts.
+            if (owner.Loaded) owner.OnChangedOnDisk();
         }
         if (rescan) Rescan();
         foreach (var m in Mods) m.RaiseChanges();

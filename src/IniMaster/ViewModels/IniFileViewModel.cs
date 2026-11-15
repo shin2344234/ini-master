@@ -71,6 +71,9 @@ public sealed class IniFileViewModel : ObservableObject
     public string? LoadError { get; private set; }
     public bool HasChanges => _pending.Count > 0;
 
+    /// True once the page has read the file, so changes on disk reach it.
+    public bool Loaded { get; private set; }
+
     /// Setting edits or an unsaved text edit on the Text tab.
     public bool HasUnsavedWork => HasChanges || _rawDirty;
     public int ChangeCount => _pending.Count;
@@ -107,6 +110,7 @@ public sealed class IniFileViewModel : ObservableObject
 
     public void Load()
     {
+        Loaded = true;
         LoadError = null;
         byte[]? bytes = null;
         try { bytes = IniStore.ReadBytes(Path); }
