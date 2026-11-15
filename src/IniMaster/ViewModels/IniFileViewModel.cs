@@ -395,6 +395,13 @@ public sealed class IniFileViewModel : ObservableObject
                 _main.Status = Loc.T("Not saved. Reload the text to see the file as it is now.");
                 return false;
             }
+            // Setting changes not saved yet are not in the text either.
+            if (_pending.Count > 0 &&
+                !_main.AskYesNo(Loc.T("{0} has setting changes that are not saved and are not in the text. Saving the text drops them. Save the text anyway?", FileName)))
+            {
+                _main.Status = Loc.T("Not saved. Save the setting changes or reload the text first.");
+                return false;
+            }
             var result = IniStore.SaveText(Path, _rawText ?? "", backup: !_backedUp);
             if (result.BackupPath != null) _backedUp = true;
             _rawDirty = false;

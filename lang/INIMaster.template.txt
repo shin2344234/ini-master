@@ -91,6 +91,7 @@ No translation for {0} yet, so the app stays in English. Mod help still follows 
 Nobody wrote help for this one yet.	
 Not one of the listed choices.	
 Not saved. Reload the text to see the file as it is now.	
+Not saved. Save the setting changes or reload the text first.	
 Not saved. {0}: {1}	
 Nothing to save. The text matches the file.	
 Numpad	
@@ -184,6 +185,7 @@ whole number
 {0} changes	
 {0} does not exist yet. Most plugins write their ini the first time the game runs with them.	
 {0} does not exist yet. The plugin may write it on its first run, or you can create it now from the defaults it describes.	
+{0} has setting changes that are not saved and are not in the text. Saving the text drops them. Save the text anyway?	
 {0} is not a key this mod reads.	
 {0} is not in that folder or in a bin64 folder inside it.	
 {0} is saved as {1}, which has no "{2}".	
