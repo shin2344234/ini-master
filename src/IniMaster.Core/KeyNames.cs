@@ -164,10 +164,12 @@ public static class KeyNames
         text.Split(new[] { ',', '|', ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
 
     /// The virtual-key codes a list of names and runs covers. A run such as
-    /// F1-F24 or Numpad0-Numpad9 takes every code from its first key to its
-    /// last. None is left out, since it is no key. Null when an entry names
-    /// no key this table knows, or none is left: the list then cannot say
-    /// what the mod reads, and refusing keys it may read would be worse.
+    /// F1-F24, Numpad0-Numpad9 or 223-255 takes every code from its first key
+    /// to its last, and each end is a key name or a code, the name first, so
+    /// 0-9 is the number keys. Any is every code from 1 to 255. None is left
+    /// out, since it is no key. Null when an entry names no key this table
+    /// knows, or none is left: the list then cannot say what the mod reads,
+    /// and refusing keys it may read would be worse.
     public static HashSet<int>? ExpandKeyList(IEnumerable<string> entries)
     {
         var set = new HashSet<int>();
@@ -175,10 +177,11 @@ public static class KeyNames
         {
             var e = raw.Trim();
             if (e.Length == 0 || e.Equals("None", StringComparison.OrdinalIgnoreCase)) continue;
+            if (e.Equals("Any", StringComparison.OrdinalIgnoreCase)) { for (var vk = 1; vk < 256; vk++) set.Add(vk); continue; }
             if (TryName(e, out var one)) { set.Add(one); continue; }
             if (TryParseVk(e, out one)) { set.Add(one); continue; }
             var dash = e.IndexOf('-', 1);
-            if (dash > 0 && TryName(e[..dash], out var from) && TryName(e[(dash + 1)..], out var to))
+            if (dash > 0 && TryKeyOrCode(e[..dash], out var from) && TryKeyOrCode(e[(dash + 1)..], out var to))
             {
                 for (var vk = Math.Min(from, to); vk <= Math.Max(from, to); vk++) set.Add(vk);
                 continue;
@@ -187,6 +190,17 @@ public static class KeyNames
         }
         return set.Count == 0 ? null : set;
     }
+
+    private static bool TryKeyOrCode(string text, out int vk) => TryName(text, out vk) || TryParseVk(text, out vk);
+
+    /// Whether a set of codes holds every code from 1 to 255, so limiting a
+    /// setting to it limits nothing.
+    public static bool CoversEveryKey(IReadOnlySet<int> set) => Enumerable.Range(1, 255).All(set.Contains);
+
+    /// Whether a set of codes leaves out a key this table names or a key the
+    /// picker's keyboard draws, so the keyboard has a key to grey out.
+    public static bool GreysOutAKey(IReadOnlySet<int> set) =>
+        ByVk.Keys.Any(k => !set.Contains(k)) || KeyboardLayout.Keys.Any(c => !set.Contains(c.Vk));
 
     /// Whether a keys list says the mod also takes no key at all.
     public static bool ListsNone(IEnumerable<string> entries) =>

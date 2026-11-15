@@ -143,6 +143,7 @@ The ini's own comments are not used.
 The list beside the key box holds the other values the comments name.	
 The lowest allowed is {0}.	
 The mod maker added help for INI Master.	
+The mod needs a key, so the clear button is off.	
 The mod reads only some keys. The keyboard greys out the rest.	
 The mod reads the key on its own, without Ctrl, Shift or Alt.	
 The plugin rereads it while the game runs.	

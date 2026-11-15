@@ -236,7 +236,8 @@ public sealed class SettingViewModel : ItemViewModel
                     _ => Loc.T("Stored as a key name. Ctrl, Shift and Alt combine with +."),
                 });
             if (R.Type == SettingTypes.Key && !R.KeyModifiers) sb.AppendLine(Loc.T("The mod reads the key on its own, without Ctrl, Shift or Alt."));
-            if (R.Type == SettingTypes.Key && R.AllowedKeys != null) sb.AppendLine(Loc.T("The mod reads only some keys. The keyboard greys out the rest."));
+            if (R.Type == SettingTypes.Key && R.AllowedKeys != null && KeyNames.GreysOutAKey(R.AllowedKeys)) sb.AppendLine(Loc.T("The mod reads only some keys. The keyboard greys out the rest."));
+            if (R.Type == SettingTypes.Key && !R.KeyCanBeNone) sb.AppendLine(Loc.T("The mod needs a key, so the clear button is off."));
             if (R.Type == SettingTypes.Key && R.KeyNone != null) sb.AppendLine(Loc.T("No key is written as {0}.", R.KeyNone));
             if (R.Type == SettingTypes.Key && R.Options.Count > 0) sb.AppendLine(Loc.T("The list beside the key box holds the other values the comments name."));
             if (R.Options.Count > 0 && R.Type == SettingTypes.Enum && AllowCustom) sb.AppendLine(Loc.T("Other values are allowed too."));

@@ -284,4 +284,50 @@ public class KeyPickerTests
         Assert.True(open.KeyCanBeNone);
         Assert.Null(open.Validate("None"));
     }
+
+    [Fact]
+    public void AKeysListRunCanHaveCodesForEnds()
+    {
+        var set = KeyNames.ExpandKeyList(new[] { "223-255" })!;
+        Assert.Equal(33, set.Count);
+        Assert.Contains(223, set);
+        Assert.Contains(255, set);
+        Assert.Equal(Enumerable.Range(0xDF, 0x21), KeyNames.ExpandKeyList(new[] { "0xDF-0xFF" })!.Order());
+        Assert.Equal(Enumerable.Range(0xDE, 2), KeyNames.ExpandKeyList(new[] { "Quote-223" })!.Order());
+        // Number key names still win, so 0-9 stays the number row.
+        Assert.Equal(Enumerable.Range(0x30, 10), KeyNames.ExpandKeyList(new[] { "0-9" })!.Order());
+    }
+
+    [Fact]
+    public void AKeysListThatCoversEveryKeyLimitsNothingButStillNeedsAKey()
+    {
+        // Master Looter's MenuKey list, which covers every code from 1 to 255.
+        var everyKey = new List<string> { "Mouse1-Quote", "223-255" };
+        var ml = SettingResolver.Resolve("s", "MenuKey", "Insert",
+            new KeyMeta { Type = SettingTypes.Key, Format = "name", Keys = everyKey });
+        Assert.Null(ml.AllowedKeys);
+        Assert.False(ml.KeyCanBeNone);
+        Assert.NotNull(ml.Validate("None"));
+        Assert.Null(ml.Validate("Ctrl+Mouse4"));
+
+        var any = SettingResolver.Resolve("s", "MenuKey", "45",
+            new KeyMeta { Type = SettingTypes.Key, Format = "vk", Keys = new() { "Any" } });
+        Assert.Null(any.AllowedKeys);
+        Assert.False(any.KeyCanBeNone);
+        Assert.NotNull(any.Validate("0"));
+        Assert.Null(any.Validate("7"));
+
+        var anyOrNone = SettingResolver.Resolve("s", "MenuKey", "45",
+            new KeyMeta { Type = SettingTypes.Key, Format = "vk", Keys = new() { "Any", "None" } });
+        Assert.Null(anyOrNone.AllowedKeys);
+        Assert.True(anyOrNone.KeyCanBeNone);
+
+        // Every named key but not every code still limits the codes left out,
+        // though the keyboard has nothing to grey out.
+        var named = SettingResolver.Resolve("s", "MenuKey", "Insert",
+            new KeyMeta { Type = SettingTypes.Key, Format = "name", Keys = new() { "Mouse1-Quote" } });
+        Assert.NotNull(named.AllowedKeys);
+        Assert.False(KeyNames.GreysOutAKey(named.AllowedKeys!));
+        Assert.True(KeyNames.GreysOutAKey(KeyNames.ExpandKeyList(new[] { "Mouse1-F24" })!));
+    }
 }

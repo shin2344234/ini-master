@@ -175,7 +175,10 @@ public static partial class SettingResolver
             keyFormat = KeyFormatShownBy(value) ?? KeyFormatShownBy(m.Default) ?? FormatFromHelp(m.Help)
                 ?? (value.Trim() == "0" ? "vk" : "name");
 
-        var allowedKeys = type == SettingTypes.Key && m.Keys is { Count: > 0 } ks ? KeyNames.ExpandKeyList(ks) : null;
+        var listedKeys = type == SettingTypes.Key && m.Keys is { Count: > 0 } ks ? KeyNames.ExpandKeyList(ks) : null;
+        // A list that holds every key still says whether no key is allowed,
+        // but it limits no key, so the page treats the key as unlimited.
+        var allowedKeys = listedKeys != null && KeyNames.CoversEveryKey(listedKeys) ? null : listedKeys;
         string? keyNone = null;
         if (type == SettingTypes.Key && m.Help != null && NoKeyValue().Match(m.Help) is { Success: true } nk)
             keyNone = nk.Groups[1].Value;
@@ -192,7 +195,7 @@ public static partial class SettingResolver
             KeyFormat = keyFormat ?? "name",
             KeyNone = keyNone,
             AllowedKeys = allowedKeys,
-            KeyCanBeNone = allowedKeys == null || keyNone != null || KeyNames.ListsNone(m.Keys!) ||
+            KeyCanBeNone = listedKeys == null || keyNone != null || KeyNames.ListsNone(m.Keys!) ||
                            (m.Help != null && NoneTurnsItOff().IsMatch(m.Help)),
             KeyModifiers = type != SettingTypes.Key || m.Modifiers != false,
             Min = m.Min,
