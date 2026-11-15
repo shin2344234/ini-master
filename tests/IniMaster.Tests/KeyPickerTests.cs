@@ -229,4 +229,18 @@ public class KeyPickerTests
         Assert.Null(s.AllowedKeys);
         Assert.Null(s.Validate("Ctrl+Mouse4"));
     }
+
+    [Fact]
+    public void AKeysListWithANameItDoesNotKnowRestrictsNothing()
+    {
+        Assert.Null(KeyNames.ExpandKeyList(new[] { "F1-F12", "VK_OEM_3" }));
+        Assert.Null(KeyNames.ExpandKeyList(new[] { "OEM_3", "VK_F1" }));
+        Assert.Null(KeyNames.ExpandKeyList(new[] { "None" }));
+        Assert.Equal(12, KeyNames.ExpandKeyList(new[] { "F1-F12", "None" })!.Count);
+
+        var s = SettingResolver.Resolve("s", "Hotkey", "Q",
+            new KeyMeta { Type = SettingTypes.Key, Format = "name", Keys = new() { "VK_F1", "VK_F2" } });
+        Assert.Null(s.AllowedKeys);
+        Assert.Null(s.Validate("Q"));
+    }
 }

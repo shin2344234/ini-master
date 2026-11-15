@@ -165,21 +165,32 @@ public static class KeyNames
 
     /// The virtual-key codes a list of names and runs covers. A run such as
     /// F1-F24 or Numpad0-Numpad9 takes every code from its first key to its
-    /// last. Entries that name no key are skipped.
-    public static HashSet<int> ExpandKeyList(IEnumerable<string> entries)
+    /// last. None is left out, since it is no key. Null when an entry names
+    /// no key this table knows, or none is left: the list then cannot say
+    /// what the mod reads, and refusing keys it may read would be worse.
+    public static HashSet<int>? ExpandKeyList(IEnumerable<string> entries)
     {
         var set = new HashSet<int>();
         foreach (var raw in entries)
         {
             var e = raw.Trim();
+            if (e.Length == 0 || e.Equals("None", StringComparison.OrdinalIgnoreCase)) continue;
             if (TryName(e, out var one)) { set.Add(one); continue; }
             if (TryParseVk(e, out one)) { set.Add(one); continue; }
             var dash = e.IndexOf('-', 1);
             if (dash > 0 && TryName(e[..dash], out var from) && TryName(e[(dash + 1)..], out var to))
+            {
                 for (var vk = Math.Min(from, to); vk <= Math.Max(from, to); vk++) set.Add(vk);
+                continue;
+            }
+            return null;
         }
-        return set;
+        return set.Count == 0 ? null : set;
     }
+
+    /// Whether a keys list says the mod also takes no key at all.
+    public static bool ListsNone(IEnumerable<string> entries) =>
+        entries.Any(e => e.Trim().Equals("None", StringComparison.OrdinalIgnoreCase));
 
     public static string NoneValue(string format) => format is "vk" or "hex" ? "0" : "None";
 
