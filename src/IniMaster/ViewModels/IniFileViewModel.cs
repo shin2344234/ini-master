@@ -220,9 +220,10 @@ public sealed class IniFileViewModel : ObservableObject
         RaiseChangeState();
         if (_main.ApplyInstantly && !s.HasError)
         {
-            // Text boxes save when typing pauses; everything else at once.
+            // Text boxes save when typing pauses; everything else at once. A
+            // list value typed into the box beside the list is a text box too.
             _saveTimer.Stop();
-            if (s.Type is SettingTypes.Bool or SettingTypes.Enum or SettingTypes.Key) Save();
+            if (s.Type is SettingTypes.Bool or SettingTypes.Key || (s.Type == SettingTypes.Enum && !s.IsCustomValue)) Save();
             else _saveTimer.Start();
         }
     }
