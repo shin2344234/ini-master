@@ -117,6 +117,18 @@ public class KeyPickerTests
         Assert.Equal(format, s.KeyFormat);
     }
 
+    // An empty key with no default shows no format, but help that calls it a
+    // key code says the mod reads a number, so a picked key is not a name.
+    [Theory]
+    [InlineData("Windows virtual-key code. 35 = END.", "vk")]
+    [InlineData("Virtual key code, such as 0x2D for Insert.", "hex")]
+    [InlineData("The key that opens the menu.", "name")]
+    public void AnEmptyKeyWithNoDefaultTakesItsFormatFromTheHelp(string help, string format)
+    {
+        var s = SettingResolver.Resolve("s", "Hotkey", "", new KeyMeta { Type = SettingTypes.Key, Help = help });
+        Assert.Equal(format, s.KeyFormat);
+    }
+
     [Fact]
     public void AGuessedKeyClearedToZeroTakesItsFormatFromTheDefault()
     {
@@ -148,6 +160,7 @@ public class KeyPickerTests
     [Theory]
     [InlineData("35")]
     [InlineData("0")]
+    [InlineData("")]
     public void AClearedKeyCodeStaysAKey(string value)
     {
         var ini = $"""

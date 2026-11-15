@@ -144,7 +144,7 @@ public static partial class SettingResolver
             allowCustom = true;
 
         if (type == SettingTypes.Key && keyFormat == null)
-            keyFormat = KeyFormatShownBy(value) ?? KeyFormatShownBy(m.Default)
+            keyFormat = KeyFormatShownBy(value) ?? KeyFormatShownBy(m.Default) ?? FormatFromHelp(m.Help)
                 ?? (value.Trim() == "0" ? "vk" : "name");
 
         string? keyNone = null;
@@ -231,6 +231,9 @@ public static partial class SettingResolver
             if (int.TryParse(lower, NumberStyles.Integer, CultureInfo.InvariantCulture, out var vk) && (vk is > 0 and < 256 || (vk == 0 && keyByHelp))) { if (vk != 0) keyFormat ??= "vk"; return SettingTypes.Key; }
             if (lower.StartsWith("0x") && KeyNames.TryParseVk(probe, out _)) { keyFormat ??= "hex"; return SettingTypes.Key; }
             if (KeyNames.LooksLikeKeyName(probe)) { keyFormat ??= "name"; return SettingTypes.Key; }
+            // ToggleKey= with no default under "virtual-key code" is a key
+            // with none set too, emptied in the text tab or shipped blank.
+            if (lower.Length == 0 && keyByHelp) return SettingTypes.Key;
         }
 
         if (hasRealRange || m.Step != null)
@@ -302,6 +305,12 @@ public static partial class SettingResolver
     private static partial Regex KeyishName();
 
     private static bool IsKeyish(string key) => KeyishName().IsMatch(key) && !key.StartsWith("Keep", StringComparison.OrdinalIgnoreCase);
+
+    /// A key whose value and default are both empty shows no format, but
+    /// help that calls it a virtual-key code says the mod reads a number,
+    /// so a picked key must not be written as a name.
+    private static string? FormatFromHelp(string? help) =>
+        help == null || !KeyCodeHelp().IsMatch(help) ? null : HexVk().IsMatch(help) ? "hex" : "vk";
 
     [GeneratedRegex(@"\b0x[0-9A-Fa-f]{2}\b")]
     private static partial Regex HexVk();
