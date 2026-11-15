@@ -151,6 +151,11 @@ public static class MetaLoader
         k.TrueValue = Str(e, "true") ?? Str(e, "trueValue") ?? k.TrueValue;
         k.FalseValue = Str(e, "false") ?? Str(e, "falseValue") ?? k.FalseValue;
         k.Format = Str(e, "format")?.ToLowerInvariant() ?? k.Format;
+        if (TryGet(e, "keys", out var keys))
+            k.Keys = keys.ValueKind == JsonValueKind.Array
+                ? keys.EnumerateArray().Select(Scalar).Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x!.Trim()).ToList()
+                : KeyNames.SplitKeyList(Scalar(keys) ?? "");
+        k.Modifiers = Bool(e, "modifiers") ?? k.Modifiers;
         k.Min = Num(e, "min") ?? k.Min;
         k.Max = Num(e, "max") ?? k.Max;
         k.Step = Num(e, "step") ?? k.Step;

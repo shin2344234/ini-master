@@ -19,6 +19,10 @@ public sealed class ResolvedSetting
     /// For key: what the mod writes for no key, when its comments say
     /// ("-1 -> No shortcut key"). Null means the format's usual 0 or None.
     public string? KeyNone { get; init; }
+    /// For key: the only codes the mod reads, from its keys list. Null means any.
+    public IReadOnlySet<int>? AllowedKeys { get; init; }
+    /// For key: false when the mod reads no Ctrl, Shift or Alt with the key.
+    public bool KeyModifiers { get; init; } = true;
     public double? Min { get; init; }
     public double? Max { get; init; }
     public bool RangeGuessed { get; init; }
@@ -55,6 +59,8 @@ public sealed class ResolvedSetting
                 if (!RangeGuessed && Max is { } hi && d > hi) return Loc.T("The highest allowed is {0}.", Fmt(hi));
                 return null;
             }
+            case SettingTypes.Key:
+                return ValidateKey(value);
             case SettingTypes.Enum:
                 if (!AllowCustom && Options.Count > 0 && !Options.Any(o => string.Equals(o.Value, value, StringComparison.OrdinalIgnoreCase)))
                     return Loc.T("Not one of the listed choices.");
@@ -63,6 +69,22 @@ public sealed class ResolvedSetting
                 return null;
         }
     }
+
+    /// A key the mod's metadata says it cannot read. No key, and the other
+    /// values the comments name, always pass.
+    private string? ValidateKey(string value)
+    {
+        var v = value.Trim();
+        if (v.Length == 0 || v == "0" || v.Equals("None", StringComparison.OrdinalIgnoreCase) || v == KeyNone) return null;
+        if (Options.Any(o => string.Equals(o.Value, v, StringComparison.OrdinalIgnoreCase))) return null;
+        if (!KeyNames.TryParse(v, KeyFormat, out var vk, out var ctrl, out var shift, out var alt)) return null;
+        if (!KeyModifiers && (ctrl || shift || alt)) return Loc.T("This mod reads the key on its own, without Ctrl, Shift or Alt.");
+        if (AllowedKeys != null && !AllowedKeys.Contains(vk)) return Loc.T("{0} is not a key this mod reads.", KeyNames.Name(vk));
+        return null;
+    }
+
+    /// Whether the key box and the keyboard may write this key.
+    public bool AllowsKey(int vk) => AllowedKeys == null || AllowedKeys.Contains(vk);
 
     /// A soft warning for a number outside a range read from prose.
     public string? Warn(string value)
@@ -162,6 +184,8 @@ public static partial class SettingResolver
             FalseValue = fv ?? "0",
             KeyFormat = keyFormat ?? "name",
             KeyNone = keyNone,
+            AllowedKeys = type == SettingTypes.Key && m.Keys is { Count: > 0 } ks ? KeyNames.ExpandKeyList(ks) : null,
+            KeyModifiers = type != SettingTypes.Key || m.Modifiers != false,
             Min = m.Min,
             Max = m.Max,
             RangeGuessed = m.RangeGuessed,

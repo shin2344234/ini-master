@@ -490,6 +490,8 @@ public static partial class CommentAnalyzer
             case "true": case "on": k.TrueValue = value; break;
             case "false": case "off": k.FalseValue = value; break;
             case "format": k.Format = value.ToLowerInvariant(); break;
+            case "keys": k.Keys = KeyNames.SplitKeyList(value); break;
+            case "modifiers": k.Modifiers = Flag(value); break;
             case "min": k.Min = Num(value); break;
             case "max": k.Max = Num(value); break;
             case "step": k.Step = Num(value); break;

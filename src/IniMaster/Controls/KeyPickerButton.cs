@@ -25,6 +25,16 @@ public sealed class KeyPickerButton : Button
     public static readonly DependencyProperty FormatProperty = DependencyProperty.Register(
         nameof(Format), typeof(string), typeof(KeyPickerButton), new PropertyMetadata("name"));
 
+    public static readonly DependencyProperty AllowModifiersProperty = DependencyProperty.Register(
+        nameof(AllowModifiers), typeof(bool), typeof(KeyPickerButton), new PropertyMetadata(true));
+
+    public static readonly DependencyProperty AllowedKeysProperty = DependencyProperty.Register(
+        nameof(AllowedKeys), typeof(IReadOnlySet<int>), typeof(KeyPickerButton), new PropertyMetadata(null));
+
+    /// False when the mod reads no Ctrl, Shift or Alt with the key.
+    public bool AllowModifiers { get => (bool)GetValue(AllowModifiersProperty); set => SetValue(AllowModifiersProperty, value); }
+    /// The only codes the mod reads, or null for any. The others are greyed out.
+    public IReadOnlySet<int>? AllowedKeys { get => (IReadOnlySet<int>?)GetValue(AllowedKeysProperty); set => SetValue(AllowedKeysProperty, value); }
     public string Value { get => (string)GetValue(ValueProperty); set => SetValue(ValueProperty, value); }
     public string Format { get => (string)GetValue(FormatProperty); set => SetValue(FormatProperty, value); }
 
@@ -77,7 +87,9 @@ public sealed class KeyPickerButton : Button
                 Margin = new Thickness(0),
                 // The name and code are what goes in the file, whatever the cap says.
                 ToolTip = vkOrHex ? $"{KeyNames.Name(cap.Vk)}   {code}" : KeyNames.Name(cap.Vk),
+                IsEnabled = AllowedKeys == null || AllowedKeys.Contains(cap.Vk),
             };
+            ToolTipService.SetShowOnDisabled(b, true);
             if (isCurrent)
             {
                 b.Background = Res("Selection");
@@ -97,7 +109,8 @@ public sealed class KeyPickerButton : Button
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(0, 0, 18, 0),
         });
-        if (!vkOrHex)
+        _ctrl = _shift = _alt = null;
+        if (!vkOrHex && AllowModifiers)
         {
             // These are what the file reads, so they are not translated.
             _ctrl = Modifier("Ctrl", ctrl);

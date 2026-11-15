@@ -141,9 +141,12 @@ The ini's own comments are not used.
 The list beside the key box holds the other values the comments name.	
 The lowest allowed is {0}.	
 The mod maker added help for INI Master.	
+The mod reads only some keys. The keyboard greys out the rest.	
+The mod reads the key on its own, without Ctrl, Shift or Alt.	
 The plugin rereads it while the game runs.	
 The plugin rereads this while the game runs.	
 There are unsaved changes ({0}). Save them first?	
+This mod reads the key on its own, without Ctrl, Shift or Alt.	
 This plugin reads its ini at startup, so restart the game to apply it.	
 This plugin reads the setting at startup. Saving works now; restart the game to see it.	
 Translate INI Master...	
@@ -178,6 +181,7 @@ whole number
 {0} changes	
 {0} does not exist yet. Most plugins write their ini the first time the game runs with them.	
 {0} does not exist yet. The plugin may write it on its first run, or you can create it now from the defaults it describes.	
+{0} is not a key this mod reads.	
 {0} is not in that folder or in a bin64 folder inside it.	
 {0} is saved as {1}, which has no "{2}".	
 {0} is saved as {1}, which has no "{2}". Use other characters, or convert the file to UTF-8 in a text editor.	

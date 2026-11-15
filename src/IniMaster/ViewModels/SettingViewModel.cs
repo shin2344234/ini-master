@@ -172,6 +172,8 @@ public sealed class SettingViewModel : ItemViewModel
 
     public string KeyFormat { get; }
     public string? KeyNone => R.KeyNone;
+    public bool KeyModifiers => R.KeyModifiers;
+    public IReadOnlySet<int>? AllowedKeys => R.AllowedKeys;
     public string KeyDescription => KeyNames.Describe(_value, KeyFormat, R.KeyNone);
 
     // ------------------------------------------------------------ validation
@@ -231,6 +233,8 @@ public sealed class SettingViewModel : ItemViewModel
                     "hex" => Loc.T("Stored as a hex virtual-key code."),
                     _ => Loc.T("Stored as a key name. Ctrl, Shift and Alt combine with +."),
                 });
+            if (R.Type == SettingTypes.Key && !R.KeyModifiers) sb.AppendLine(Loc.T("The mod reads the key on its own, without Ctrl, Shift or Alt."));
+            if (R.Type == SettingTypes.Key && R.AllowedKeys != null) sb.AppendLine(Loc.T("The mod reads only some keys. The keyboard greys out the rest."));
             if (R.Type == SettingTypes.Key && R.KeyNone != null) sb.AppendLine(Loc.T("No key is written as {0}.", R.KeyNone));
             if (R.Type == SettingTypes.Key && R.Options.Count > 0) sb.AppendLine(Loc.T("The list beside the key box holds the other values the comments name."));
             if (R.Options.Count > 0 && R.Type == SettingTypes.Enum && AllowCustom) sb.AppendLine(Loc.T("Other values are allowed too."));

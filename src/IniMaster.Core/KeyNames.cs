@@ -159,6 +159,28 @@ public static class KeyNames
         return value.Length == 0 ? "None" : value;
     }
 
+    /// "F1-F24, A-Z, Insert" or "F1-F24|Insert" into its entries.
+    public static List<string> SplitKeyList(string text) =>
+        text.Split(new[] { ',', '|', ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+
+    /// The virtual-key codes a list of names and runs covers. A run such as
+    /// F1-F24 or Numpad0-Numpad9 takes every code from its first key to its
+    /// last. Entries that name no key are skipped.
+    public static HashSet<int> ExpandKeyList(IEnumerable<string> entries)
+    {
+        var set = new HashSet<int>();
+        foreach (var raw in entries)
+        {
+            var e = raw.Trim();
+            if (TryName(e, out var one)) { set.Add(one); continue; }
+            if (TryParseVk(e, out one)) { set.Add(one); continue; }
+            var dash = e.IndexOf('-', 1);
+            if (dash > 0 && TryName(e[..dash], out var from) && TryName(e[(dash + 1)..], out var to))
+                for (var vk = Math.Min(from, to); vk <= Math.Max(from, to); vk++) set.Add(vk);
+        }
+        return set;
+    }
+
     public static string NoneValue(string format) => format is "vk" or "hex" ? "0" : "None";
 
     // Runs of keys that read better as a range than one by one.

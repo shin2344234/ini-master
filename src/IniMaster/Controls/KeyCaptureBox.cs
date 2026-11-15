@@ -21,6 +21,16 @@ public sealed class KeyCaptureBox : TextBox
     public static readonly DependencyProperty NoneValueProperty = DependencyProperty.Register(
         nameof(NoneValue), typeof(string), typeof(KeyCaptureBox), new PropertyMetadata(null, (d, _) => ((KeyCaptureBox)d).ShowValue()));
 
+    /// False when the mod reads no Ctrl, Shift or Alt with the key.
+    public static readonly DependencyProperty AllowModifiersProperty = DependencyProperty.Register(
+        nameof(AllowModifiers), typeof(bool), typeof(KeyCaptureBox), new PropertyMetadata(true));
+
+    /// The only codes the mod reads, or null for any.
+    public static readonly DependencyProperty AllowedKeysProperty = DependencyProperty.Register(
+        nameof(AllowedKeys), typeof(IReadOnlySet<int>), typeof(KeyCaptureBox), new PropertyMetadata(null));
+
+    public bool AllowModifiers { get => (bool)GetValue(AllowModifiersProperty); set => SetValue(AllowModifiersProperty, value); }
+    public IReadOnlySet<int>? AllowedKeys { get => (IReadOnlySet<int>?)GetValue(AllowedKeysProperty); set => SetValue(AllowedKeysProperty, value); }
     public string Value { get => (string)GetValue(ValueProperty); set => SetValue(ValueProperty, value); }
     public string Format { get => (string)GetValue(FormatProperty); set => SetValue(FormatProperty, value); }
     public string? NoneValue { get => (string?)GetValue(NoneValueProperty); set => SetValue(NoneValueProperty, value); }
@@ -84,6 +94,13 @@ public sealed class KeyCaptureBox : TextBox
     private void Commit(int vk, ModifierKeys mods)
     {
         if (vk <= 0) return;
+        if (AllowedKeys != null && !AllowedKeys.Contains(vk))
+        {
+            // Stay in the box, so the next key pressed is the next try.
+            Text = Loc.T("{0} is not a key this mod reads.", KeyNames.Name(vk));
+            return;
+        }
+        if (!AllowModifiers) mods = ModifierKeys.None;
         Value = KeyNames.Format(vk, mods.HasFlag(ModifierKeys.Control), mods.HasFlag(ModifierKeys.Shift), mods.HasFlag(ModifierKeys.Alt), Format);
         // Leave the box so the next key press goes back to the page.
         MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));

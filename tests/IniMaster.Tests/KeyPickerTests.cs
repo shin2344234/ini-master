@@ -176,4 +176,57 @@ public class KeyPickerTests
         Assert.Equal("vk", s.KeyFormat);
         Assert.Equal(SettingTypes.Bool, view.Settings.Single(x => x.Setting.Key == "StartEnabled").Setting.Type);
     }
+
+    // Glint Spotter reads Key=Ctrl+F11 as the hex code C and Key=Down as 0D,
+    // so a mod has to be able to say which keys it reads.
+    private const string GlintMeta = """
+        { "sections": { "GlintSpotter": { "keys": {
+            "Key": { "type": "key", "format": "name", "keys": ["F1-F24", "A-Z", "0-9", "Insert", "Numpad0-Numpad9"], "modifiers": false }
+        } } } }
+        """;
+
+    [Theory]
+    [InlineData("F11", true)]
+    [InlineData("F24", true)]
+    [InlineData("Q", true)]
+    [InlineData("Numpad7", true)]
+    [InlineData("None", true)]
+    [InlineData("", true)]
+    [InlineData("Down", false)]
+    [InlineData("Escape", false)]
+    [InlineData("Mouse4", false)]
+    [InlineData("Ctrl+F11", false)]
+    public void AKeysListRefusesKeysTheModCannotRead(string value, bool ok)
+    {
+        var meta = MetaLoader.LoadJson(GlintMeta);
+        var s = SettingResolver.Resolve("GlintSpotter", "Key", value, meta.Sections["GlintSpotter"].Keys["Key"]);
+        Assert.False(s.KeyModifiers);
+        Assert.Equal(ok, s.Validate(value) == null);
+    }
+
+    [Fact]
+    public void ADirectiveCarriesTheKeysListAndModifiers()
+    {
+        const string ini = """
+            [settings]
+            ;@ type=key format=name keys=F1-F12,Insert modifiers=0
+            Hotkey=F5
+            """;
+        var view = IniView.Build(new IniTarget { IniPath = "x.ini", Meta = new ModMeta() }, IniDocument.Parse(ini));
+        var s = view.Settings.Single(x => x.Setting.Key == "Hotkey").Setting;
+        Assert.False(s.KeyModifiers);
+        Assert.True(s.AllowsKey(0x2D));
+        Assert.True(s.AllowsKey(0x7B));
+        Assert.False(s.AllowsKey(0x7C));
+        Assert.NotNull(s.Validate("Shift+F5"));
+    }
+
+    [Fact]
+    public void WithoutAKeysListEveryKeyAndModifierPasses()
+    {
+        var s = SettingResolver.Resolve("s", "Hotkey", "Ctrl+Mouse4", new KeyMeta { Type = SettingTypes.Key, Format = "name" });
+        Assert.True(s.KeyModifiers);
+        Assert.Null(s.AllowedKeys);
+        Assert.Null(s.Validate("Ctrl+Mouse4"));
+    }
 }

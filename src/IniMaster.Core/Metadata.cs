@@ -49,6 +49,12 @@ public sealed class KeyMeta
     public string? TrueValue { get; set; }
     public string? FalseValue { get; set; }
     public string? Format { get; set; }
+    /// For key: the only keys the mod reads, as names or runs such as
+    /// "F1-F24" and "A-Z". Null means any key.
+    public List<string>? Keys { get; set; }
+    /// For key: false when the mod reads a key on its own, without Ctrl,
+    /// Shift or Alt joined to it.
+    public bool? Modifiers { get; set; }
     public double? Min { get; set; }
     public double? Max { get; set; }
     public bool RangeGuessed { get; set; }
@@ -78,6 +84,8 @@ public sealed class KeyMeta
         TrueValue = o.TrueValue ?? TrueValue;
         FalseValue = o.FalseValue ?? FalseValue;
         Format = o.Format ?? Format;
+        Keys = o.Keys ?? Keys;
+        Modifiers = o.Modifiers ?? Modifiers;
         if (o.Min != null || o.Max != null) { Min = o.Min; Max = o.Max; RangeGuessed = o.RangeGuessed; }
         Step = o.Step ?? Step;
         Options = o.Options ?? Options;
