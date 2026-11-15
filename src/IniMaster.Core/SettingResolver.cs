@@ -355,8 +355,9 @@ public static partial class SettingResolver
     [GeneratedRegex(@"(?<![\w.-])(-1|0)\s*(?:->|=>|=|:|-|means)\s*(?:no|none|disabled?|off|unbound|nothing)\b", RegexOptions.IgnoreCase)]
     private static partial Regex NoKeyValue();
 
-    // "None turns the key off", "None leaves it unbound", "None disables it".
-    [GeneratedRegex(@"\bNone\s+(?:turns|switches|leaves|unbinds|disables|means|=|:|-)", RegexOptions.IgnoreCase)]
+    // "None turns the key off", "None leaves it unbound", "None disables it",
+    // "None for no key".
+    [GeneratedRegex(@"\bNone\s+(?:turns|switches|leaves|unbinds|disables|means|=|:|-|for\s+(?:no|none|off|nothing)\b)", RegexOptions.IgnoreCase)]
     private static partial Regex NoneTurnsItOff();
 
     [GeneratedRegex(@"^-?\d*\.\d+([eE][-+]?\d+)?f?$|^-?\d+\.\d*$")]

@@ -271,6 +271,15 @@ public class KeyPickerTests
         Assert.True(prose.KeyCanBeNone);
         Assert.Null(prose.Validate("None"));
 
+        var forNoKey = SettingResolver.Resolve("s", "HideKeysToggleKey", "Ctrl+F10",
+            new KeyMeta { Type = SettingTypes.Key, Format = "name", Keys = new() { "F1-F24", "A-Z" }, Help = "Turns it on and off while you play. None for no key." });
+        Assert.True(forNoKey.KeyCanBeNone);
+        Assert.Null(forNoKey.Validate("None"));
+
+        var noneOfThem = SettingResolver.Resolve("s", "Key", "F9",
+            new KeyMeta { Type = SettingTypes.Key, Format = "name", Keys = new() { "F1-F12" }, Help = "None for the rest of the session is not possible." });
+        Assert.False(noneOfThem.KeyCanBeNone);
+
         var open = SettingResolver.Resolve("s", "Hotkey", "Q", new KeyMeta { Type = SettingTypes.Key, Format = "name" });
         Assert.True(open.KeyCanBeNone);
         Assert.Null(open.Validate("None"));
