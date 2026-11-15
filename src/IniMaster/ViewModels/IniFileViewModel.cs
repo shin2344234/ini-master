@@ -42,6 +42,7 @@ public sealed class IniFileViewModel : ObservableObject
     private string? _structure;
     private bool _backedUp;
     private string? _rawText;
+    private string? _rawHash;
     private bool _rawDirty;
     private IniView? _view;
 
@@ -357,6 +358,7 @@ public sealed class IniFileViewModel : ObservableObject
                 try
                 {
                     var bytes = IniStore.ReadBytes(Path);
+                    _rawHash = bytes == null ? null : IniStore.Hash(bytes);
                     _rawText = bytes == null ? "" : TextCodec.Decode(bytes, out _);
                 }
                 catch (Exception ex) { _rawText = "; could not read the file: " + ex.Message; }
@@ -384,6 +386,15 @@ public sealed class IniFileViewModel : ObservableObject
     {
         try
         {
+            // The text is a copy from when editing began. A setting saved
+            // since, or a value the plugin wrote, would be undone by it.
+            var now = IniStore.ReadBytes(Path);
+            if ((now == null ? null : IniStore.Hash(now)) != _rawHash &&
+                !_main.AskYesNo(Loc.T("{0} changed on disk after you began editing its text. Saving the text puts back what the file said then and undoes those changes. Save the text anyway?", FileName)))
+            {
+                _main.Status = Loc.T("Not saved. Reload the text to see the file as it is now.");
+                return false;
+            }
             var result = IniStore.SaveText(Path, _rawText ?? "", backup: !_backedUp);
             if (result.BackupPath != null) _backedUp = true;
             _rawDirty = false;

@@ -90,6 +90,7 @@ No plugin with this name. The ini may belong to a DLL mod or an overlay.
 No translation for {0} yet, so the app stays in English. Mod help still follows the language where the mod has it.	
 Nobody wrote help for this one yet.	
 Not one of the listed choices.	
+Not saved. Reload the text to see the file as it is now.	
 Not saved. {0}: {1}	
 Nothing to save. The text matches the file.	
 Numpad	
@@ -178,6 +179,7 @@ the ini's own comments
 the plugin's embedded metadata	
 whole number	
 {0} (missing)	
+{0} changed on disk after you began editing its text. Saving the text puts back what the file said then and undoes those changes. Save the text anyway?	
 {0} changed on disk and was reloaded.	
 {0} changes	
 {0} does not exist yet. Most plugins write their ini the first time the game runs with them.	

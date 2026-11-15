@@ -460,6 +460,10 @@ public sealed class MainViewModel : ObservableObject
 
     public bool HasUnsaved => Mods.Any(m => m.HasChanges);
 
+    /// A yes or no question for the player. True means yes.
+    public Func<string, bool> AskYesNo { get; set; } = text =>
+        MessageBox.Show(text, "INI Master", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes;
+
     /// Asks before throwing edits away. False means stay.
     public bool ConfirmDiscard()
     {
