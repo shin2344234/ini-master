@@ -10,9 +10,10 @@ Download `INIMaster-<version>.zip` from [Nexus Mods](https://www.nexusmods.com/c
 
 - Pick a mod on the left. Hover a setting for its full help, or click it to pin the help at the bottom.
 - A key setting has a box that records the next key you press. The keyboard button beside it opens a picture of a keyboard to click instead, which also shows each key's name and code.
+- A mod that says which keys it reads has the others greyed out on the keyboard and refused in the box. A key the mod cannot leave unbound has its clear button turned off.
 - "Save as I edit" writes each change straight away. Turn it off to collect changes and save with Ctrl+S (Ctrl+Shift+S saves every file).
 - The dot next to a setting marks an unsaved change. The two buttons on its right undo that change, or put the default back when the mod declares one.
-- "Plain text values" swaps every control for the raw text, for when a guess about a setting's type is wrong. The File text tab edits the whole file.
+- "Plain text values" swaps every control for the raw text, for when a guess about a setting's type is wrong. The File text tab edits the whole file, and Save text asks first if the file changed on disk since you began editing.
 - The first save of each file in a session copies the old file to `%LOCALAPPDATA%\INIMaster\backups`. More, Open backups of this ini goes there.
 
 INI Master asks GitHub for a newer release when it starts, and asks you before it downloads anything. Saying no keeps it quiet about that version. More, Check for updates asks again at any time, and the same menu turns the start up check off. An update installs only if it is signed with the same certificate as the copy you are running.
@@ -21,7 +22,7 @@ INI Master shows its own text in the Windows language when it has a translation 
 
 Text in any script reads and saves correctly, in UTF-8, UTF-16 or the Windows code page the file already uses. If a value holds a character the file's code page cannot store, INI Master refuses to save it and says which character, instead of writing a question mark.
 
-Saving rewrites only the values you changed. Comments, blank lines, key order, spacing, line endings and encoding stay exactly as they were. If a plugin rewrites its own ini while INI Master is open, the page reloads with the new values and keeps your unsaved edits on top.
+Saving rewrites only the values you changed. Comments, blank lines, key order, spacing, line endings and encoding stay exactly as they were. If a plugin rewrites its own ini while INI Master is open, the page reloads with the new values and keeps your unsaved edits on top. A list value such as a key list saves once you pause typing.
 
 ## For mod makers
 
