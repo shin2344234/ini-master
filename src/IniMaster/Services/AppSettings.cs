@@ -24,6 +24,9 @@ public sealed class AppSettings
     /// A version the person said no to, so the start up check stays quiet
     /// about it. Checking from the menu ignores this.
     public string? SkippedVersion { get; set; }
+    /// Ask GitHub about other mods whose metadata names a repository. Off
+    /// until the person turns it on.
+    public bool CheckModUpdates { get; set; }
 
     private static string FilePath => Path.Combine(IniStore.AppDataFolder, "settings.json");
 

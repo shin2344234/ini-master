@@ -559,6 +559,7 @@ public static partial class CommentAnalyzer
                 case "version": m.Version = value; break;
                 case "author": case "authors": m.Author = value; break;
                 case "url": case "link": case "homepage": m.Url = value; break;
+                case "github": m.Github = value; break;
                 case "description": case "desc": case "help": m.Description = value; break;
                 case "game": m.Game = value; break;
                 case "live": case "hotreload": m.Live = Flag(value); break;

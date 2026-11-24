@@ -73,6 +73,26 @@ public sealed class ModViewModel : ObservableObject
 
     public bool HasChanges => Files.Any(f => f.HasUnsavedWork);
 
+    private ModRelease? _newerRelease;
+    private string? _installedText;
+
+    /// A release on GitHub newer than the installed version, found by the
+    /// update check for mods. Null when there is none or the check is off.
+    public ModRelease? NewerRelease => _newerRelease;
+    public bool HasNewerRelease => _newerRelease != null;
+    public string NewerReleaseText => _newerRelease == null ? ""
+        : Loc.T("{0} {1} is out on GitHub. You have {2}.", Name, _newerRelease.Tag, _installedText ?? "");
+    public string NewerReleaseLink => _newerRelease == null ? "" : Loc.T("{0} is out", _newerRelease.Tag);
+    public string? NewerReleasePage => _newerRelease?.PageUrl;
+
+    public void SetNewerRelease(ModRelease? release, string? installedText)
+    {
+        if (_newerRelease == release && _installedText == installedText) return;
+        _newerRelease = release;
+        _installedText = installedText;
+        Raise(nameof(NewerRelease), nameof(HasNewerRelease), nameof(NewerReleaseText), nameof(NewerReleaseLink), nameof(NewerReleasePage));
+    }
+
     public void EnsureLoaded()
     {
         if (_selectedFile == null) return;

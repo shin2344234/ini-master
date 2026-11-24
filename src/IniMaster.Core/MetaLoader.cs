@@ -109,6 +109,7 @@ public static class MetaLoader
         m.Version = Str(e, "version") ?? m.Version;
         m.Author = Str(e, "author") ?? Str(e, "authors") ?? m.Author;
         m.Url = Str(e, "url") ?? Str(e, "homepage") ?? m.Url;
+        m.Github = Str(e, "github") ?? m.Github;
         m.Description = Str(e, "description") ?? m.Description;
         m.Game = Str(e, "game") ?? m.Game;
         m.Live = Bool(e, "live") ?? Bool(e, "hotReload") ?? m.Live;

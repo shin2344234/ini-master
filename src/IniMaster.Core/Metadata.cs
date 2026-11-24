@@ -141,6 +141,10 @@ public sealed class ModMeta
     public string? Version { get; set; }
     public string? Author { get; set; }
     public string? Url { get; set; }
+    /// The GitHub repository the mod publishes releases in, as "owner/name".
+    /// INI Master compares its newest release with Version when the person
+    /// has turned on update checks for mods.
+    public string? Github { get; set; }
     public string? Description { get; set; }
     public string? Game { get; set; }
     /// True if the plugin rereads its ini while the game runs.
@@ -185,6 +189,7 @@ public sealed class ModMeta
         Version = o.Version ?? Version;
         Author = o.Author ?? Author;
         Url = o.Url ?? Url;
+        Github = o.Github ?? Github;
         Description = o.Description ?? Description;
         Game = o.Game ?? Game;
         Live = o.Live ?? Live;

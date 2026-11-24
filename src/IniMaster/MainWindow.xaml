@@ -240,6 +240,9 @@
                                 <MenuItem Header="{l:T 'Check for updates'}" Command="{Binding CheckUpdatesCommand}" />
                                 <MenuItem Header="{l:T 'Check when INI Master starts'}" IsCheckable="True"
                                           IsChecked="{Binding CheckUpdatesOnStart}" />
+                                <MenuItem Header="{l:T 'Check mods for updates too'}" IsCheckable="True"
+                                          IsChecked="{Binding CheckModUpdates}"
+                                          ToolTip="{l:T 'Asks GitHub about each mod whose maker named a repository in its metadata, and marks the ones with a newer release. Nothing is downloaded.'}" />
                             </ContextMenu>
                         </Button.ContextMenu>
                     </Button>
@@ -310,6 +313,11 @@
                                         <TextBlock Text="{Binding Subtitle}" Style="{StaticResource Caption}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Border Style="{StaticResource Pill}" BorderBrush="{StaticResource Gold}" Margin="0,0,4,0"
+                                                Visibility="{Binding HasNewerRelease, Converter={StaticResource Visible}}"
+                                                ToolTip="{Binding NewerReleaseText}">
+                                            <TextBlock Text="{l:T 'Update'}" FontSize="10" Foreground="{StaticResource Gold}" />
+                                        </Border>
                                         <Border Style="{StaticResource Pill}" BorderBrush="{StaticResource GoldDim}"
                                                 Visibility="{Binding HasBadge, Converter={StaticResource Visible}}"
                                                 ToolTip="{l:T 'The mod maker added help for INI Master.'}">
@@ -360,6 +368,10 @@
                                        Style="{StaticResource Secondary}" Visibility="{Binding SelectedFile.Meta.Author, Converter={StaticResource Visible}}" />
                             <TextBlock Margin="12,0,0,4" VerticalAlignment="Bottom" Visibility="{Binding SelectedFile.Meta.Url, Converter={StaticResource Visible}}">
                                 <Hyperlink NavigateUri="{Binding SelectedFile.Meta.Url}" RequestNavigate="Link_Navigate"><Run Text="{l:T 'Mod page'}" /></Hyperlink>
+                            </TextBlock>
+                            <TextBlock Margin="12,0,0,4" VerticalAlignment="Bottom" Visibility="{Binding HasNewerRelease, Converter={StaticResource Visible}}"
+                                       ToolTip="{Binding NewerReleaseText}">
+                                <Hyperlink NavigateUri="{Binding NewerReleasePage}" RequestNavigate="Link_Navigate"><Run Text="{Binding NewerReleaseLink, Mode=OneWay}" /></Hyperlink>
                             </TextBlock>
                         </WrapPanel>
                     </DockPanel>

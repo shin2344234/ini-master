@@ -87,6 +87,7 @@ Name it after the ini (`MyMod.inimeta`) and put it next to it. It can hold eithe
   "version": "1.0.0",
   "author": "You",
   "url": "https://www.nexusmods.com/crimsondesert/mods/0000",
+  "github": "you/example-mod",     // where you publish releases; see below
   "ini": "ExampleMod.ini",         // which ini this describes; default: the plugin's name
   "live": true,                    // the plugin rereads its ini while the game runs
   "description": "Shown under About this mod.",
@@ -124,6 +125,8 @@ Name it after the ini (`MyMod.inimeta`) and put it next to it. It can hold eithe
   }
 }
 ```
+
+`github` names the GitHub repository you publish releases in, as `owner/name` or a `https://github.com/owner/name` link. Players who turn on More, Check mods for updates too then see an Update mark on your mod when the tag of your newest GitHub release is a higher version than `version`. Tags such as `1.4.2` and `v1.4.2` both read. Drafts and pre-releases are skipped. Without `version`, INI Master compares against the plugin's own file version. Keep `version` in step with each release, which embedding does for you. An annotated default ini sets the same field with `;@mod github=you/example-mod`.
 
 `options` can also be an object (`{ "0": "Low", "1": "High" }`) or a string (`"0:Low|1:High"`). Keys the ini doesn't have yet still show, with their default, and a change adds them to the right section.
 

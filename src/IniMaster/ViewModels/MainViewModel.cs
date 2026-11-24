@@ -49,7 +49,7 @@ public sealed class MainViewModel : ObservableObject
         GuideCommand = new RelayCommand(OpenGuide);
         ClearFilterCommand = new RelayCommand(() => Filter = "");
         OpenLanguageFolderCommand = new RelayCommand(OpenLanguageFolder);
-        CheckUpdatesCommand = new RelayCommand(() => _ = CheckForUpdates(quiet: false), () => !_updating);
+        CheckUpdatesCommand = new RelayCommand(CheckEverything, () => !_updating);
     }
 
     public ObservableCollection<ModViewModel> Mods { get; } = new();
@@ -297,6 +297,125 @@ public sealed class MainViewModel : ObservableObject
         }
     }
 
+    // ------------------------------------------------------------ updates for other mods
+
+    /// Newest release per repository from the last check, null for one with
+    /// no release. Kept so a rescan after a mod updates can drop its badge
+    /// without asking GitHub again.
+    private readonly Dictionary<string, ModRelease?> _modReleases = new(StringComparer.OrdinalIgnoreCase);
+    private bool _checkingMods;
+
+    public bool CheckModUpdates
+    {
+        get => _settings.CheckModUpdates;
+        set
+        {
+            if (_settings.CheckModUpdates == value) return;
+            _settings.CheckModUpdates = value;
+            Raise();
+            AppLog.Write($"Mod update check switched {(value ? "on" : "off")}");
+            if (value) _ = CheckModUpdatesAsync(quiet: false);
+            else
+            {
+                _modReleases.Clear();
+                ApplyModReleases();
+            }
+        }
+    }
+
+    /// More, Check for updates: INI Master itself, and the other mods when
+    /// that check is on.
+    private void CheckEverything()
+    {
+        _ = CheckForUpdates(quiet: false);
+        if (CheckModUpdates) _ = CheckModUpdatesAsync(quiet: false);
+    }
+
+    /// Asks GitHub for the newest release of every mod whose metadata names a
+    /// repository, one request per repository, and badges the mods that have
+    /// a newer one. On start this says nothing unless it finds one.
+    public async Task CheckModUpdatesAsync(bool quiet)
+    {
+        if (_checkingMods || !CheckModUpdates) return;
+        _checkingMods = true;
+        try
+        {
+            var mods = Mods.ToList();
+            AppLog.Write($"Mod update check started: {mods.Count} mods listed in {BinFolder ?? "no game folder"}");
+            var sources = new Dictionary<ModViewModel, ModUpdateSource>();
+            foreach (var m in mods)
+            {
+                if (ModUpdates.SourceOf(m.Info) is { } source)
+                {
+                    sources[m] = source;
+                    AppLog.Write($"Mod update check: {m.Name} ({m.Id}) names {source.Repo}, installed {source.InstalledText ?? "unknown (no version in its metadata or plugin)"}");
+                }
+                else if (ModUpdates.UnreadableRepo(m.Info) is { } bad)
+                    AppLog.Write($"Mod update check: {m.Name} ({m.Id}) has github \"{bad}\", which is not owner/name, skipped");
+                else
+                    AppLog.Write($"Mod update check: {m.Name} ({m.Id}) names no GitHub repository, skipped");
+            }
+            if (sources.Count > 0 && !quiet) Status = Loc.T("Asking GitHub about {0}...", Loc.Plural(sources.Count, "1 mod", "{0} mods"));
+
+            var failed = 0;
+            foreach (var repo in sources.Values.Select(s => s.Repo).Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                try
+                {
+                    var release = await ModUpdates.LatestAsync(Http, repo);
+                    _modReleases[repo] = release;
+                    AppLog.Write(release == null
+                        ? $"Mod update check: {repo} has no release on GitHub"
+                        : $"Mod update check: {repo} newest release {release.Tag} ({release.Version}) at {release.PageUrl}");
+                }
+                catch (Exception ex)
+                {
+                    failed++;
+                    _modReleases.Remove(repo);
+                    AppLog.Write($"Mod update check: {repo} could not be read: {ex.GetType().Name}: {ex.Message}");
+                }
+            }
+
+            ApplyModReleases();
+            var newer = Mods.Where(m => m.HasNewerRelease).ToList();
+            foreach (var m in sources.Keys)
+            {
+                var s = sources[m];
+                var verdict = !_modReleases.TryGetValue(s.Repo, out var r) ? "not compared, the request failed"
+                    : r == null ? "not compared, no release"
+                    : s.Installed == null ? $"not compared, installed version unknown, newest {r.Tag}"
+                    : m.HasNewerRelease ? $"update available, {r.Tag} is newer than {s.InstalledText}"
+                    : $"up to date, {s.InstalledText} against {r.Tag}";
+                AppLog.Write($"Mod update check result: {m.Name}: {verdict}");
+            }
+            AppLog.Write($"Mod update check done: {sources.Count} mods name a repository, {newer.Count} with an update, {failed} requests failed");
+
+            if (newer.Count > 0)
+                Status = Loc.T("Updates on GitHub for {0}: {1}.", Loc.Plural(newer.Count, "1 mod", "{0} mods"), string.Join(", ", newer.Select(m => m.Name)));
+            else if (!quiet)
+                Status = sources.Count == 0
+                    ? Loc.T("No mod here names a GitHub repository in its metadata, so there is nothing to check.")
+                    : failed > 0
+                    ? Loc.T("No mod updates found, and GitHub did not answer for {0}.", Loc.Plural(failed, "1 mod", "{0} mods"))
+                    : Loc.T("Every mod that names a GitHub repository is up to date.");
+        }
+        finally { _checkingMods = false; }
+    }
+
+    /// Badges each mod from the releases already fetched, against the version
+    /// the latest scan found.
+    private void ApplyModReleases()
+    {
+        foreach (var m in Mods)
+        {
+            var source = CheckModUpdates ? ModUpdates.SourceOf(m.Info) : null;
+            var release = source != null && _modReleases.TryGetValue(source.Repo, out var r) ? r : null;
+            var newer = ModUpdates.NewerThan(release, source?.Installed);
+            if (newer == null && m.HasNewerRelease) AppLog.Write($"Mod update check: badge cleared for {m.Name}");
+            m.SetNewerRelease(newer, source?.InstalledText);
+        }
+    }
+
     /// The first paragraph of the release notes, short enough for a message box.
     private static string Summary(string? notes)
     {
@@ -357,6 +476,7 @@ public sealed class MainViewModel : ObservableObject
         Rescan();
         var last = Mods.FirstOrDefault(m => string.Equals(m.Id, _settings.LastMod, StringComparison.OrdinalIgnoreCase));
         SelectedMod = last ?? Mods.FirstOrDefault(FilterMod);
+        if (CheckModUpdates) _ = CheckModUpdatesAsync(quiet: true);
     }
 
     public static string CommunityFolder => Path.Combine(AppContext.BaseDirectory, "inimeta");
@@ -390,6 +510,7 @@ public sealed class MainViewModel : ObservableObject
         }
         if (selectedId != null && SelectedMod == null)
             SelectedMod = Mods.FirstOrDefault(m => string.Equals(m.Id, selectedId, StringComparison.OrdinalIgnoreCase));
+        if (_modReleases.Count > 0) ApplyModReleases();
         var plugins = Mods.Count(m => m.Info.HasPlugin);
         Status = Loc.T("Found {0} and {1} in {2}.",
             Loc.Plural(plugins, "1 plugin", "{0} plugins"),

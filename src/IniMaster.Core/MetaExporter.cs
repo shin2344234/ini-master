@@ -21,6 +21,7 @@ public static class MetaExporter
             w.WriteString("version", m.Version ?? "1.0.0");
             w.WriteString("author", m.Author ?? "");
             w.WriteString("url", m.Url ?? "");
+            if (m.Github != null) w.WriteString("github", m.Github);
             w.WriteString("ini", m.Ini ?? iniFileName);
             if (m.Live is { } live) w.WriteBoolean("live", live);
             else w.WriteBoolean("live", false);

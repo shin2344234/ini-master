@@ -17,6 +17,7 @@
 (not in the file yet)	
 , then 	
 1 change	
+1 mod	
 1 other ini file	
 1 plugin	
 1 unsaved change	
@@ -25,9 +26,12 @@ About this mod
 Adding help for INI Master	
 All files	
 Any other value. The list covers the ones the comments name.	
+Asking GitHub about {0}...	
 Asking GitHub for the newest version...	
+Asks GitHub about each mod whose maker named a repository in its metadata, and marks the ones with a newer release. Nothing is downloaded.	
 Back to the default: {0}	
 Check for updates	
+Check mods for updates too	
 Check when INI Master starts	
 Checked every two seconds. Saving works either way; a running game only notices if the plugin rereads its ini.	
 Choose the Crimson Desert folder	
@@ -55,6 +59,7 @@ Discard text edits
 Downloading INI Master {0}, {1}%	
 Edit every value as the text in the file, for when a control guessed wrong.	
 Embedded help	
+Every mod that names a GitHub repository is up to date.	
 Export metadata template...	
 File text	
 Find a mod	
@@ -85,7 +90,9 @@ Needs a whole number.
 Next launch	
 No key	
 No key is written as {0}.	
+No mod here names a GitHub repository in its metadata, so there is nothing to check.	
 No mod selected	
+No mod updates found, and GitHub did not answer for {0}.	
 No plugin with this name. The ini may belong to a DLL mod or an overlay.	
 No translation for {0} yet, so the app stays in English. Mod help still follows the language where the mod has it.	
 Nobody wrote help for this one yet.	
@@ -159,6 +166,8 @@ Type: {0}, guessed from the value and comments
 Undo this change (back to the value in the file)	
 Undo unsaved changes in this file	
 Unsaved changes	
+Update	
+Updates on GitHub for {0}: {1}.	
 Windows refused to write {0}. If the game is under Program Files, run INI Master as administrator, or clear the file's read-only flag.	
 Write each change to the ini a moment after you make it, so a plugin that rereads its ini picks it up while you play.	
 Writes {0} for on and {1} for off.	
@@ -189,11 +198,14 @@ whole number
 {0} has setting changes that are not saved and are not in the text. Saving the text drops them. Save the text anyway?	
 {0} is not a key this mod reads.	
 {0} is not in that folder or in a bin64 folder inside it.	
+{0} is out	
 {0} is saved as {1}, which has no "{2}".	
 {0} is saved as {1}, which has no "{2}". Use other characters, or convert the file to UTF-8 in a text editor.	
+{0} mods	
 {0} other ini files	
 {0} plugins	
 {0} to {1}	
 {0} to {1} = {2} to {3}	
 {0} unsaved changes	
+{0} {1} is out on GitHub. You have {2}.	
 {0}, no plugin	
