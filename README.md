@@ -18,7 +18,7 @@ Download `INIMaster-<version>.zip` from [Nexus Mods](https://www.nexusmods.com/c
 
 INI Master asks GitHub for a newer release when it starts, and asks you before it downloads anything. Saying no keeps it quiet about that version. More, Check for updates asks again at any time, and the same menu turns the start up check off. An update installs only if it is signed with the same certificate as the copy you are running.
 
-More, Check mods for updates too asks GitHub about the other mods as well. It is off until you turn it on, and it covers only mods whose makers put a GitHub repository in their metadata. A mod with a newer release gets an Update mark in the list and a link to the release beside its name. INI Master downloads nothing for other mods. Each check writes what it asked and found to `%LOCALAPPDATA%\INIMaster\INIMaster.log`, and the log from the session before is `INIMaster.01.log`.
+New in 1.2.13 is More, Check mods for updates too. It asks GitHub about the other mods as well. It is off until you turn it on, and it covers only mods whose makers put a GitHub repository in their metadata, in a `github` field. 1.2.13 is not tested in play. A mod with a newer release gets an Update mark in the list and a link to the release beside its name. INI Master downloads nothing for other mods. Each check writes what it asked and found to `%LOCALAPPDATA%\INIMaster\INIMaster.log`, and the log from the session before is `INIMaster.01.log`.
 
 INI Master shows its own text in the Windows language when it has a translation for it, and English otherwise. More, Language picks another. Mods that ship help in several languages show it in the same one. [docs/TRANSLATING.md](docs/TRANSLATING.md) explains how to add a language.
 
@@ -34,7 +34,7 @@ INI Master already reads the comments in your shipped ini. To give it exact type
 INIMETA INIMETA "MyMod.inimeta"
 ```
 
-[docs/METADATA.md](docs/METADATA.md) has the full format. `sdk/inimaster.h` holds a macro for embedding without a resource script and a small watcher for rereading the ini while the game runs. `sdk/example` is a working plugin that uses both. In the app, More, Export metadata template writes a starting `.inimeta` from what it already reads out of your comments.
+[docs/METADATA.md](docs/METADATA.md) has the full format. To get an Update mark on your mod for players who turn on More, Check mods for updates too, add a `github` field with `owner/name`, which it compares against your newest GitHub release. `sdk/inimaster.h` holds a macro for embedding without a resource script and a small watcher for rereading the ini while the game runs. `sdk/example` is a working plugin that uses both. In the app, More, Export metadata template writes a starting `.inimeta` from what it already reads out of your comments.
 
 Community `.inimeta` files for mods whose authors haven't written one go in the `inimeta` folder next to `INIMaster.exe`.
 
